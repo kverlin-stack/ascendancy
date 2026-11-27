@@ -1,18 +1,18 @@
 {
   "handSize": 5,
   "effortPerTurn": 3,
-  "progressGoal": 74,
+  "progressGoal": 76,
   "frontTerritories": 10,
   "turnsPerQuarter": 3,
   "quartersPerYear": 4,
-  "advanceByYear": [3, 4, 5],
+  "advanceByYear": [4, 5, 6],
   "morale": {
     "high": 8,
     "highDrawBonus": 1,
     "low": 3,
     "lowEffortPenalty": 1
   },
-  "quarterlyMoraleLoss": 2,
+  "quarterlyMoraleLoss": 1,
   "burnoutMoraleLoss": 2,
   "traits": {
     "meritAfterPlays": 3,

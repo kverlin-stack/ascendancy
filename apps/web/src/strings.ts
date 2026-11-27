@@ -114,7 +114,7 @@ export const STAT_INFO: Record<StatKey, string> = {
   budget:
     'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
   morale:
-    'How hard your people can keep going. At 8+ you draw 1 extra card each turn; at 3 or less you get 1 less Effort. War weariness costs 2 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
+    'How hard your people can keep going. At 8+ you draw 1 extra card each turn; at 3 or less you get 1 less Effort. War weariness costs 1 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
 };
 
 const LOSS_TEXT: Record<LossCause, string> = {

@@ -2,7 +2,7 @@
   {
     "id": "armored-offensive",
     "name": "Armored Offensive",
-    "text": "Front advances 3. -1 Morale.",
+    "text": "Front advances 3. -2 Morale.",
     "copies": 3,
     "fromQuarter": 1,
     "effects": [
@@ -12,33 +12,33 @@
       },
       {
         "type": "loseMorale",
-        "amount": 1
+        "amount": 2
       }
     ]
   },
   {
     "id": "spy-ring",
     "name": "Spy Ring",
-    "text": "-3 Secrecy.",
+    "text": "-4 Secrecy.",
     "copies": 2,
     "fromQuarter": 1,
     "effects": [
       {
         "type": "loseSecrecy",
-        "amount": 3
+        "amount": 4
       }
     ]
   },
   {
     "id": "naval-blockade",
     "name": "Naval Blockade",
-    "text": "-2 Budget.",
+    "text": "-3 Budget.",
     "copies": 2,
     "fromQuarter": 1,
     "effects": [
       {
         "type": "loseBudget",
-        "amount": 2
+        "amount": 3
       }
     ]
   },
@@ -46,7 +46,7 @@
     "id": "propaganda-broadcast",
     "name": "{enemyShort} Broadcast",
     "text": "-2 Morale.",
-    "copies": 1,
+    "copies": 2,
     "fromQuarter": 1,
     "effects": [
       {
