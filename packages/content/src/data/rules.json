@@ -1,0 +1,11 @@
+{
+  "handSize": 5,
+  "effortPerTurn": 3,
+  "progressGoal": 30,
+  "frontTerritories": 10,
+  "turnsPerQuarter": 3,
+  "quartersPerYear": 4,
+  "advanceByYear": [1, 2, 3],
+  "start": { "budget": 10, "secrecy": 10, "morale": 8 },
+  "max": { "secrecy": 10, "morale": 10 }
+}

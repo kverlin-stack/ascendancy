@@ -1,0 +1,94 @@
+[
+  {
+    "id": "lab-work",
+    "name": "Lab Work",
+    "type": "research",
+    "cost": 1,
+    "text": "+2 Progress.",
+    "effects": [{ "type": "addProgress", "amount": 2 }]
+  },
+  {
+    "id": "night-shift",
+    "name": "Night Shift",
+    "type": "research",
+    "cost": 1,
+    "text": "+3 Progress. -1 Morale.",
+    "effects": [
+      { "type": "addProgress", "amount": 3 },
+      { "type": "gainMorale", "amount": -1 }
+    ]
+  },
+  {
+    "id": "prototype-run",
+    "name": "Prototype Run",
+    "type": "research",
+    "cost": 2,
+    "text": "+5 Progress. -2 Budget.",
+    "effects": [
+      { "type": "addProgress", "amount": 5 },
+      { "type": "gainBudget", "amount": -2 }
+    ]
+  },
+  {
+    "id": "hold-the-line",
+    "name": "Hold the Line",
+    "type": "warEffort",
+    "cost": 1,
+    "text": "Push the Front back 1.",
+    "effects": [{ "type": "pushFront", "amount": 1 }]
+  },
+  {
+    "id": "counteroffensive",
+    "name": "Counteroffensive",
+    "type": "warEffort",
+    "cost": 2,
+    "text": "Push the Front back 2. +1 Morale.",
+    "effects": [
+      { "type": "pushFront", "amount": 2 },
+      { "type": "gainMorale", "amount": 1 }
+    ]
+  },
+  {
+    "id": "counterintelligence",
+    "name": "Counterintelligence",
+    "type": "security",
+    "cost": 1,
+    "text": "+3 Secrecy.",
+    "effects": [{ "type": "protectSecrecy", "amount": 3 }]
+  },
+  {
+    "id": "cover-story",
+    "name": "Cover Story",
+    "type": "security",
+    "cost": 0,
+    "text": "+1 Secrecy. Draw 1.",
+    "effects": [
+      { "type": "protectSecrecy", "amount": 1 },
+      { "type": "drawCards", "amount": 1 }
+    ]
+  },
+  {
+    "id": "ministers-favor",
+    "name": "Minister's Favor",
+    "type": "people",
+    "cost": 1,
+    "text": "+3 Budget.",
+    "effects": [{ "type": "gainBudget", "amount": 3 }]
+  },
+  {
+    "id": "rally-the-workers",
+    "name": "Rally the Workers",
+    "type": "people",
+    "cost": 1,
+    "text": "+3 Morale.",
+    "effects": [{ "type": "gainMorale", "amount": 3 }]
+  },
+  {
+    "id": "morning-briefing",
+    "name": "Morning Briefing",
+    "type": "people",
+    "cost": 0,
+    "text": "Draw 2.",
+    "effects": [{ "type": "drawCards", "amount": 2 }]
+  }
+]
