@@ -11,7 +11,7 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       turnsPerQuarter: 3,
       quartersPerYear: 4,
       advanceByYear: [1, 2, 3],
-      moraleEffort: { high: 8, low: 2 },
+      morale: { high: 8, highDrawBonus: 1, low: 2, lowEffortPenalty: 1 },
       quarterlyMoraleLoss: 0,
       burnoutMoraleLoss: 2,
       reward: { choices: 3, weights: { common: 6, uncommon: 3, rare: 1 } },

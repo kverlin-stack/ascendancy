@@ -243,14 +243,16 @@ describe('fortify', () => {
 });
 
 describe('morale', () => {
-  it('high Morale gives +1 Effort, low Morale gives -1', () => {
+  it('high Morale draws +1 card; low Morale gives -1 Effort', () => {
     const s0 = newGame(content, 1);
     const at = (morale: number) =>
-      applyAction({ ...s0, resources: { ...s0.resources, morale } }, { type: 'endTurn' }, content)
-        .effort;
-    expect(at(5)).toBe(3);
-    expect(at(8)).toBe(4);
-    expect(at(2)).toBe(2);
+      applyAction({ ...s0, resources: { ...s0.resources, morale } }, { type: 'endTurn' }, content);
+    expect(at(5).effort).toBe(3);
+    expect(at(5).hand).toHaveLength(5);
+    expect(at(8).effort).toBe(3);
+    expect(at(8).hand).toHaveLength(6);
+    expect(at(2).effort).toBe(2);
+    expect(at(2).hand).toHaveLength(5);
   });
 
   it('war weariness costs Morale every quarter', () => {

@@ -80,8 +80,11 @@ export interface Rules {
   quartersPerYear: number;
   /** Enemy Advance per quarter for year 1, 2, 3...; the last value repeats. */
   advanceByYear: number[];
-  /** Morale at or above `high` gives +1 Effort per turn; at or below `low`, -1. */
-  moraleEffort: { high: number; low: number };
+  /**
+   * Morale at or above `high` draws `highDrawBonus` extra cards each turn;
+   * at or below `low`, you get `lowEffortPenalty` less Effort.
+   */
+  morale: { high: number; highDrawBonus: number; low: number; lowEffortPenalty: number };
   /** War weariness: Morale lost at every quarter end. */
   quarterlyMoraleLoss: number;
   /** Morale lost when a scientist burns out. */
@@ -136,7 +139,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 7;
+export const STATE_VERSION = 8;
 
 export interface GameState {
   version: number;

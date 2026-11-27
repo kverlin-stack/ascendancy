@@ -79,7 +79,14 @@ export const RulesSchema: z.ZodType<Rules> = z
     turnsPerQuarter: positive,
     quartersPerYear: positive,
     advanceByYear: z.array(z.number().int().min(0)).min(1),
-    moraleEffort: z.object({ high: positive, low: positive }).strict(),
+    morale: z
+      .object({
+        high: positive,
+        highDrawBonus: z.number().int().min(0),
+        low: positive,
+        lowEffortPenalty: z.number().int().min(0),
+      })
+      .strict(),
     quarterlyMoraleLoss: z.number().int().min(0),
     burnoutMoraleLoss: z.number().int().min(0),
     reward: z

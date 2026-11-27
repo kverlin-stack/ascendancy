@@ -75,19 +75,26 @@ export function newGame(
     log: [],
   };
   s.effort = s.maxEffort = effortForTurn(s, content);
-  drawCards(s, rules.handSize, rng);
+  drawCards(s, handSizeForTurn(s, content), rng);
   s.enemyDeck = rng.shuffle(eligibleThreats(content, 1));
   s.threatId = drawThreat(s, content, rng);
   s.rngState = rng.state;
   return s;
 }
 
-/** Effort at the start of a turn: the base, +1 at high Morale, -1 at low Morale. */
+/** Effort at the start of a turn: the base, minus the low-Morale penalty. */
 export function effortForTurn(s: GameState, content: GameContent): number {
   const { rules } = content;
-  const m = s.resources.morale;
-  const bonus = m >= rules.moraleEffort.high ? 1 : m <= rules.moraleEffort.low ? -1 : 0;
-  return Math.max(1, rules.effortPerTurn + bonus);
+  const low = s.resources.morale <= rules.morale.low ? rules.morale.lowEffortPenalty : 0;
+  return Math.max(1, rules.effortPerTurn - low);
+}
+
+/** Cards drawn at the start of a turn: the hand size, plus the high-Morale bonus. */
+export function handSizeForTurn(s: GameState, content: GameContent): number {
+  const { rules } = content;
+  return (
+    rules.handSize + (s.resources.morale >= rules.morale.high ? rules.morale.highDrawBonus : 0)
+  );
 }
 
 export function getCard(content: GameContent, cardId: string): CardDef {
@@ -237,7 +244,14 @@ function endTurn(state: GameState, content: GameContent): GameState {
 
   // 5. Fortify expires. Scientists left unplayed in hand rest, then discard.
   s.fortify = 0;
-  for (const inst of s.hand) rest(s, inst.uid, 1);
+  for (const inst of s.hand) {
+    const before = s.burnout[inst.uid];
+    if (before === undefined) continue;
+    rest(s, inst.uid, 1);
+    s.log.push(
+      `T${s.turn}: ${getCard(content, inst.cardId).name} rested (Burnout ${before} → ${before - 1})`,
+    );
+  }
   s.discard.push(...s.hand);
   s.hand = [];
 
@@ -259,7 +273,7 @@ function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
   s.turn += 1;
   s.researchThisTurn = 0;
   s.effort = s.maxEffort = effortForTurn(s, content);
-  drawCards(s, content.rules.handSize, rng);
+  drawCards(s, handSizeForTurn(s, content), rng);
   // A new quarter shuffles newly unlocked enemy actions into the rest of the enemy deck.
   const rules = content.rules;
   if ((s.turn - 1) % rules.turnsPerQuarter === 0) {
