@@ -31,12 +31,13 @@ describe('content', () => {
   it('rejects duplicate ids and unknown starter cards', () => {
     const dupCards = [...(rawContent.cards as object[]), (rawContent.cards as object[])[0]];
     expect(() => validateContent({ ...rawContent, cards: dupCards })).toThrow(/duplicate id/);
-    expect(() =>
-      validateContent({
-        ...rawContent,
-        starterDeck: [...(rawContent.starterDeck as string[]), 'ghost'],
-      }),
-    ).toThrow(/unknown card "ghost"/);
+    const dirs = (rawContent.directors as { starterDeck: string[] }[]).map((d) => ({
+      ...d,
+      starterDeck: [...d.starterDeck, 'ghost'],
+    }));
+    expect(() => validateContent({ ...rawContent, directors: dirs })).toThrow(
+      /unknown card "ghost"/,
+    );
   });
 
   it('rejects bad field values with a readable path', () => {

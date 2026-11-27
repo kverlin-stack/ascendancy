@@ -90,12 +90,29 @@ export interface Rules {
   max: { secrecy: number; morale: number };
 }
 
+/** Run-wide rules a Director imposes. */
+export type DirectorRule =
+  /** The first Research card played each turn gives extra Progress. */
+  | { type: 'firstResearchBonus'; amount: number }
+  /** Changes every scientist's Burnout limit (negative = burn out sooner). Never below 1. */
+  | { type: 'burnoutLimit'; amount: number };
+
+export interface DirectorDef {
+  id: string;
+  name: string;
+  /** Short name of the run-wide rule, e.g. "Wartime Footing". */
+  ruleName: string;
+  text: string;
+  /** Card ids, duplicates allowed. */
+  starterDeck: string[];
+  rules: DirectorRule[];
+}
+
 export interface GameContent {
   rules: Rules;
   cards: CardDef[];
   threats: ThreatDef[];
-  /** Card ids, duplicates allowed. */
-  starterDeck: string[];
+  directors: DirectorDef[];
 }
 
 export interface CardInstance {
@@ -117,12 +134,13 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 export interface GameState {
   version: number;
   seed: number;
   rngState: number;
+  directorId: string;
   /** 1-based. Each turn is one month. */
   turn: number;
   phase: Phase;
@@ -132,6 +150,8 @@ export interface GameState {
   maxEffort: number;
   /** Front loss blocked for the rest of this turn. */
   fortify: number;
+  /** Research cards played so far this turn. */
+  researchThisTurn: number;
   resources: Resources;
   drawPile: CardInstance[];
   hand: CardInstance[];

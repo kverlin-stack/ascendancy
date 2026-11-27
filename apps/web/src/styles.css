@@ -377,3 +377,13 @@ button {
   padding-left: 18px;
   font-size: 13px;
 }
+
+.director {
+  margin-top: -6px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--muted);
+}

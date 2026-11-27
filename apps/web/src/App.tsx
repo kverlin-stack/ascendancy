@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   advanceFor,
   applyAction,
+  burnoutLimitOf,
   canPlay,
   getCard,
+  getDirector,
   getThreat,
   newGame,
   quarterOf,
@@ -34,7 +36,7 @@ const STAT_INFO: Record<StatKey, string> = {
   budget:
     'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
   morale:
-    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 1 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
+    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 2 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
 };
 
 const LOSS_TEXT: Record<string, string> = {
@@ -53,6 +55,7 @@ export function App() {
   const [state, setState] = useState<GameState>(() => loadRun() ?? newGame(content, randomSeed()));
   const [info, setInfo] = useState<StatKey | null>(null);
   const [showEnemyDeck, setShowEnemyDeck] = useState(false);
+  const [showDirector, setShowDirector] = useState(false);
   const toggleInfo = (key: StatKey) => setInfo((cur) => (cur === key ? null : key));
 
   useEffect(() => saveRun(state), [state]);
@@ -62,6 +65,7 @@ export function App() {
   const newRun = () => setState(newGame(content, randomSeed()));
 
   const r = state.resources;
+  const director = getDirector(content, state.directorId);
   const threat = getThreat(content, state.threatId);
   const year = yearOf(state.turn, rules);
   const untilAdvance = turnsUntilAdvance(state, rules);
@@ -77,6 +81,11 @@ export function App() {
           New run
         </button>
       </header>
+
+      <button className="director" onClick={() => setShowDirector((v) => !v)}>
+        {director.name} · <em>{director.ruleName}</em> {showDirector ? '▴' : '▾'}
+      </button>
+      {showDirector && <p className="stat-info">{director.text}</p>}
 
       <section className="progress" aria-label="Progress">
         <div className="row">
@@ -190,7 +199,10 @@ export function App() {
               <span className="type">{card.scientist ? 'Scientist' : TYPE_LABEL[card.type]}</span>
               <span className="text">{card.text}</span>
               {card.scientist && (
-                <Burnout used={state.burnout[inst.uid] ?? 0} limit={card.scientist.burnoutLimit} />
+                <Burnout
+                  used={state.burnout[inst.uid] ?? 0}
+                  limit={burnoutLimitOf(state, content, card)}
+                />
               )}
             </button>
           );
@@ -232,7 +244,7 @@ export function App() {
                     <span className="text">{card.text}</span>
                     {card.scientist && (
                       <span className="role muted">
-                        {card.scientist.role} Burnout {card.scientist.burnoutLimit}.
+                        {card.scientist.role} Burnout {burnoutLimitOf(state, content, card)}.
                       </span>
                     )}
                   </button>

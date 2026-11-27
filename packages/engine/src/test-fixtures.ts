@@ -166,7 +166,27 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       },
     ],
     threats: [{ id: 'quiet', name: 'Quiet', text: '', copies: 1, fromQuarter: 1, effects: [] }],
-    starterDeck: ['lab', 'lab', 'lab', 'big', 'hold', 'hold', 'cover', 'rally', 'draw', 'bonds'],
+    directors: [
+      {
+        id: 'd',
+        name: 'D',
+        ruleName: 'None',
+        text: '',
+        rules: [],
+        starterDeck: [
+          'lab',
+          'lab',
+          'lab',
+          'big',
+          'hold',
+          'hold',
+          'cover',
+          'rally',
+          'draw',
+          'bonds',
+        ],
+      },
+    ],
     ...overrides,
   };
 }

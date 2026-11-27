@@ -1,6 +1,7 @@
 import {
   advanceFor,
   applyAction,
+  burnoutLimitOf,
   canPlay,
   getCard,
   getThreat,
@@ -112,7 +113,10 @@ export const greedyBot: Bot = {
       const after = applyAction(state, { type: 'playCard', uid: inst.uid }, content);
       let gain = evaluate(after, content) - base;
       for (const e of card.effects) if (e.type === 'drawCards') gain += DRAW_VALUE * e.amount;
-      if (card.scientist && (state.burnout[inst.uid] ?? 0) + 1 >= card.scientist.burnoutLimit) {
+      if (
+        card.scientist &&
+        (state.burnout[inst.uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card)
+      ) {
         gain -= BURNOUT_PENALTY;
       }
       if (gain > 0 && (!best || gain > best.gain)) best = { uid: inst.uid, gain };
@@ -153,7 +157,7 @@ export function cardValue(card: CardDef, state: GameState, content: GameContent)
     v += e.amount > 0 ? per * e.amount : EFFECT_VALUE[e.type] * e.amount;
   }
   if (card.exhaust) v *= 0.5;
-  if (card.scientist) v *= Math.min(1.2, card.scientist.burnoutLimit / 3.5);
+  if (card.scientist) v *= Math.min(1.2, burnoutLimitOf(state, content, card) / 3.5);
   return v / (card.cost + 1);
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyAction, canPlay, cloneState, getCard, newGame } from './game';
+import { applyAction, burnoutLimitOf, canPlay, cloneState, getCard, newGame } from './game';
 import { testContent } from './test-fixtures';
 import type { GameContent, GameState } from './types';
 
@@ -25,7 +25,7 @@ describe('newGame', () => {
   it('deals a hand of 5 with full Effort and starting resources', () => {
     const s = newGame(content, 1);
     expect(s.hand).toHaveLength(5);
-    expect(s.drawPile).toHaveLength(content.starterDeck.length - 5);
+    expect(s.drawPile).toHaveLength(content.directors[0]!.starterDeck.length - 5);
     expect(s.effort).toBe(3);
     expect(s.turn).toBe(1);
     expect(s.resources).toEqual({ progress: 0, front: 10, secrecy: 5, budget: 5, morale: 5 });
@@ -455,6 +455,39 @@ describe('the Mole', () => {
       const s = applyAction({ ...newGame(content, seed), turn: 3 }, { type: 'endTurn' }, content);
       expect(s.rewardOptions).not.toContain('mole');
     }
+  });
+});
+
+describe('director rules', () => {
+  const withRules = (rules: GameContent['directors'][number]['rules']): GameContent => {
+    const c = testContent();
+    c.directors = [{ ...c.directors[0]!, rules }];
+    return c;
+  };
+
+  it('firstResearchBonus adds Progress to the first Research card each turn only', () => {
+    const c = withRules([{ type: 'firstResearchBonus', amount: 2 }]);
+    const s0 = withHand(newGame(c, 1), ['lab', 'lab']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
+    expect(s1.resources.progress).toBe(4);
+    const s2 = applyAction(s1, { type: 'playCard', uid: 1001 }, c);
+    expect(s2.resources.progress).toBe(6);
+    const s3 = applyAction(s2, { type: 'endTurn' }, c);
+    expect(s3.researchThisTurn).toBe(0);
+  });
+
+  it('burnoutLimit makes scientists burn out sooner, but never below 1 play', () => {
+    const c = withRules([{ type: 'burnoutLimit', amount: -1 }]);
+    const s0 = withHand(newGame(c, 1), ['ace']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
+    expect(s1.lost.map((x) => x.uid)).toEqual([1000]); // limit 2 - 1 = 1
+    const harsh = withRules([{ type: 'burnoutLimit', amount: -5 }]);
+    expect(burnoutLimitOf(newGame(harsh, 1), harsh, getCard(harsh, 'ace'))).toBe(1);
+  });
+
+  it('newGame uses the chosen director and rejects unknown ones', () => {
+    expect(newGame(content, 1, 'd').directorId).toBe('d');
+    expect(() => newGame(content, 1, 'nobody')).toThrow(/Unknown director/);
   });
 });
 

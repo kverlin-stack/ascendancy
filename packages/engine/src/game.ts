@@ -6,6 +6,7 @@ import type {
   CardDef,
   CardEffect,
   CardInstance,
+  DirectorDef,
   GameContent,
   GameState,
   LossCause,
@@ -33,21 +34,28 @@ export function applyAction(state: GameState, action: Action, content: GameConte
   }
 }
 
-export function newGame(content: GameContent, seed: number | string): GameState {
+export function newGame(
+  content: GameContent,
+  seed: number | string,
+  directorId: string = content.directors[0]?.id ?? '',
+): GameState {
   const seedState = seedToState(seed);
   const rng = createRng(seedState);
   const { rules } = content;
-  const deck: CardInstance[] = content.starterDeck.map((cardId, i) => ({ uid: i + 1, cardId }));
+  const director = getDirector(content, directorId);
+  const deck: CardInstance[] = director.starterDeck.map((cardId, i) => ({ uid: i + 1, cardId }));
   const s: GameState = {
     version: STATE_VERSION,
     seed: seedState,
     rngState: 0,
+    directorId: director.id,
     turn: 1,
     phase: 'playing',
     lossCause: null,
     effort: 0,
     maxEffort: 0,
     fortify: 0,
+    researchThisTurn: 0,
     resources: {
       progress: 0,
       front: rules.frontTerritories,
@@ -88,6 +96,22 @@ export function getCard(content: GameContent, cardId: string): CardDef {
   return card;
 }
 
+export function getDirector(content: GameContent, directorId: string): DirectorDef {
+  const d = content.directors.find((x) => x.id === directorId);
+  if (!d) throw new Error(`Unknown director: ${directorId}`);
+  return d;
+}
+
+/** A scientist's Burnout limit after the Director's rules. */
+export function burnoutLimitOf(state: GameState, content: GameContent, card: CardDef): number {
+  if (!card.scientist) return Infinity;
+  let limit = card.scientist.burnoutLimit;
+  for (const r of getDirector(content, state.directorId).rules) {
+    if (r.type === 'burnoutLimit') limit += r.amount;
+  }
+  return Math.max(1, limit);
+}
+
 export function getThreat(content: GameContent, threatId: string): ThreatDef {
   const threat = content.threats.find((t) => t.id === threatId);
   if (!threat) throw new Error(`Unknown threat: ${threatId}`);
@@ -114,7 +138,7 @@ export function canPlay(state: GameState, uid: number, content: GameContent): bo
     if (e.type === 'protectSecrecy') secrecy += e.amount;
   }
   // Burning out a scientist costs Morale too.
-  if (card.scientist && (state.burnout[uid] ?? 0) + 1 >= card.scientist.burnoutLimit) {
+  if (card.scientist && (state.burnout[uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card)) {
     morale -= content.rules.burnoutMoraleLoss;
   }
   const r = state.resources;
@@ -132,11 +156,24 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   const card = getCard(content, inst.cardId);
   s.effort -= card.cost;
   for (const effect of card.effects) applyCardEffect(s, effect, content, rng);
+  if (card.type === 'research') {
+    if (s.researchThisTurn === 0) {
+      for (const r of getDirector(content, s.directorId).rules) {
+        if (r.type === 'firstResearchBonus') {
+          s.resources.progress = Math.min(
+            content.rules.progressGoal,
+            s.resources.progress + r.amount,
+          );
+        }
+      }
+    }
+    s.researchThisTurn += 1;
+  }
   s.log.push(`T${s.turn}: played ${card.name}`);
   // Discard after effects, so a drawCards reshuffle can't pull the card straight back.
   if (card.scientist) {
     const b = (s.burnout[inst.uid] ?? 0) + 1;
-    if (b >= card.scientist.burnoutLimit) {
+    if (b >= burnoutLimitOf(s, content, card)) {
       s.lost.push(inst);
       delete s.burnout[inst.uid];
       s.resources.morale = Math.max(0, s.resources.morale - content.rules.burnoutMoraleLoss);
@@ -220,6 +257,7 @@ function endTurn(state: GameState, content: GameContent): GameState {
 
 function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
   s.turn += 1;
+  s.researchThisTurn = 0;
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, content.rules.handSize, rng);
   // A new quarter shuffles newly unlocked enemy actions into the rest of the enemy deck.

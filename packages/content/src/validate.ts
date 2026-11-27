@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import type { GameContent } from '@ascendancy/engine';
-import { CardSchema, RulesSchema, StarterDeckSchema, ThreatSchema } from './schemas';
+import { CardSchema, DirectorSchema, RulesSchema, ThreatSchema } from './schemas';
 
 export interface RawContent {
   rules: unknown;
   cards: unknown;
   threats: unknown;
-  starterDeck: unknown;
+  directors: unknown;
 }
 
 export class ContentError extends Error {
@@ -33,7 +33,7 @@ export function validateContent(raw: RawContent): GameContent {
   const rules = parse('rules', RulesSchema, raw.rules);
   const cards = parse('cards', z.array(CardSchema).min(1), raw.cards);
   const threats = parse('threats', z.array(ThreatSchema).min(1), raw.threats);
-  const starterDeck = parse('starterDeck', StarterDeckSchema, raw.starterDeck);
+  const directors = parse('directors', z.array(DirectorSchema).min(1), raw.directors);
 
   if (cards) {
     for (const dup of duplicates(cards.map((c) => c.id)))
@@ -43,10 +43,17 @@ export function validateContent(raw: RawContent): GameContent {
     for (const dup of duplicates(threats.map((t) => t.id)))
       problems.push(`threats: duplicate id "${dup}"`);
   }
-  if (cards && starterDeck) {
+  if (directors) {
+    for (const dup of duplicates(directors.map((d) => d.id)))
+      problems.push(`directors: duplicate id "${dup}"`);
+  }
+  if (cards && directors) {
     const known = new Set(cards.map((c) => c.id));
-    for (const cardId of starterDeck) {
-      if (!known.has(cardId)) problems.push(`starterDeck: unknown card "${cardId}"`);
+    for (const d of directors) {
+      for (const cardId of d.starterDeck) {
+        if (!known.has(cardId))
+          problems.push(`director "${d.id}" starterDeck: unknown card "${cardId}"`);
+      }
     }
   }
   if (cards && threats) {
@@ -64,14 +71,20 @@ export function validateContent(raw: RawContent): GameContent {
     if (!threats.some((t) => t.fromQuarter === 1))
       problems.push('threats: at least one must start in quarter 1');
   }
-  if (rules && starterDeck && starterDeck.length < rules.handSize) {
-    problems.push(`starterDeck: needs at least ${rules.handSize} cards (hand size)`);
+  if (rules && directors) {
+    for (const d of directors) {
+      if (d.starterDeck.length < rules.handSize) {
+        problems.push(
+          `director "${d.id}" starterDeck: needs at least ${rules.handSize} cards (hand size)`,
+        );
+      }
+    }
   }
 
-  if (problems.length > 0 || !rules || !cards || !threats || !starterDeck) {
+  if (problems.length > 0 || !rules || !cards || !threats || !directors) {
     throw new ContentError(problems);
   }
-  return { rules, cards, threats, starterDeck };
+  return { rules, cards, threats, directors };
 }
 
 function duplicates(ids: string[]): string[] {

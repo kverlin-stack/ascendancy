@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { CardDef, Rules, ThreatDef } from '@ascendancy/engine';
+import type { CardDef, DirectorDef, Rules, ThreatDef } from '@ascendancy/engine';
 
 const id = z
   .string()
@@ -98,4 +98,18 @@ export const RulesSchema: z.ZodType<Rules> = z
   })
   .strict();
 
-export const StarterDeckSchema = z.array(id).min(5);
+export const DirectorRuleSchema = z.discriminatedUnion('type', [
+  effect('firstResearchBonus', positive),
+  effect('burnoutLimit', amount),
+]);
+
+export const DirectorSchema: z.ZodType<DirectorDef> = z
+  .object({
+    id,
+    name: z.string().min(1),
+    ruleName: z.string().min(1),
+    text: z.string().min(1),
+    starterDeck: z.array(id).min(5),
+    rules: z.array(DirectorRuleSchema),
+  })
+  .strict();

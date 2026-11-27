@@ -1,0 +1,33 @@
+[
+  {
+    "id": "vera-halloran",
+    "name": "Minister Vera Halloran",
+    "ruleName": "Wartime Footing",
+    "text": "Your first Research card each turn gives +2 Progress. Scientists burn out 1 play sooner.",
+    "starterDeck": [
+      "lab-work",
+      "lab-work",
+      "prototype-run",
+      "open-air-test",
+      "dr-ilse-varnholt",
+      "col-august-rhee",
+      "dig-in",
+      "dig-in",
+      "counteroffensive",
+      "counterintelligence",
+      "ministers-favor",
+      "rally-the-workers",
+      "morning-briefing"
+    ],
+    "rules": [
+      {
+        "type": "firstResearchBonus",
+        "amount": 2
+      },
+      {
+        "type": "burnoutLimit",
+        "amount": -1
+      }
+    ]
+  }
+]
