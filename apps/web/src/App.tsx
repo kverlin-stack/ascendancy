@@ -24,6 +24,18 @@ const TYPE_LABEL: Record<CardType, string> = {
   people: 'People',
 };
 
+type StatKey = 'secrecy' | 'budget' | 'morale';
+
+/** What each resource means. Shown when you tap it. */
+const STAT_INFO: Record<StatKey, string> = {
+  secrecy:
+    'How well Project Sunfire stays hidden. Spy Rings lower it; Security cards restore it. At 0 the program is exposed and you lose.',
+  budget:
+    'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
+  morale:
+    'How hard your people can keep going. Offensives and overtime wear it down; rallies lift it. At 0 the staff walk out and you lose.',
+};
+
 const LOSS_TEXT: Record<string, string> = {
   front: 'The Front reached the capital.',
   secrecy: 'Secrecy collapsed. The program was exposed.',
@@ -38,6 +50,8 @@ function randomSeed(): number {
 
 export function App() {
   const [state, setState] = useState<GameState>(() => loadRun() ?? newGame(content, randomSeed()));
+  const [info, setInfo] = useState<StatKey | null>(null);
+  const toggleInfo = (key: StatKey) => setInfo((cur) => (cur === key ? null : key));
 
   useEffect(() => saveRun(state), [state]);
 
@@ -75,10 +89,30 @@ export function App() {
       </section>
 
       <section className="stats">
-        <Stat label="Secrecy" value={r.secrecy} max={rules.max.secrecy} />
-        <Stat label="Budget" value={r.budget} />
-        <Stat label="Morale" value={r.morale} max={rules.max.morale} />
+        <Stat
+          label="Secrecy"
+          value={r.secrecy}
+          max={rules.max.secrecy}
+          active={info === 'secrecy'}
+          onTap={() => toggleInfo('secrecy')}
+        />
+        <Stat
+          label="Budget"
+          value={r.budget}
+          active={info === 'budget'}
+          onTap={() => toggleInfo('budget')}
+        />
+        <Stat
+          label="Morale"
+          value={r.morale}
+          max={rules.max.morale}
+          active={info === 'morale'}
+          onTap={() => toggleInfo('morale')}
+        />
       </section>
+      <p className="stat-info">
+        {info ? STAT_INFO[info] : 'If any of these hit 0, you lose. Tap one to learn more.'}
+      </p>
 
       <section className="front" aria-label="The Front">
         <div className="row">
@@ -101,7 +135,7 @@ export function App() {
       </section>
 
       <section className="threat">
-        <span className="muted">Enemy this turn</span>
+        <span className="muted">Enemy's next move · hits when you end your turn</span>
         <div>
           <strong>{threat.name}</strong>: {threat.text}
         </div>
@@ -171,15 +205,29 @@ export function App() {
   );
 }
 
-function Stat({ label, value, max }: { label: string; value: number; max?: number }) {
-  const low = value <= 3;
+function Stat({
+  label,
+  value,
+  max,
+  active,
+  onTap,
+}: {
+  label: string;
+  value: number;
+  max?: number;
+  active: boolean;
+  onTap: () => void;
+}) {
+  const classes = ['stat', value <= 3 ? 'low' : '', active ? 'active' : '']
+    .filter(Boolean)
+    .join(' ');
   return (
-    <div className={low ? 'stat low' : 'stat'}>
-      <span className="muted">{label}</span>
+    <button className={classes} onClick={onTap} aria-expanded={active}>
+      <span className="muted">{label} ⓘ</span>
       <strong>
         {value}
         {max !== undefined && <span className="muted">/{max}</span>}
       </strong>
-    </div>
+    </button>
   );
 }
