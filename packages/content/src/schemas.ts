@@ -19,6 +19,7 @@ export const CardEffectSchema = z.discriminatedUnion('type', [
   effect('protectSecrecy', amount),
   effect('gainMorale', amount),
   effect('drawCards', positive),
+  effect('restScientists', positive),
 ]);
 
 export const ThreatEffectSchema = z.discriminatedUnion('type', [
@@ -36,8 +37,13 @@ export const CardSchema: z.ZodType<CardDef> = z
     cost: z.number().int().min(0).max(5),
     text: z.string().min(1),
     effects: z.array(CardEffectSchema).min(1),
+    scientist: z
+      .object({ burnoutLimit: z.number().int().min(1).max(9), role: z.string().min(1) })
+      .strict()
+      .optional(),
   })
-  .strict();
+  .strict()
+  .refine((c) => !c.scientist || c.type === 'people', 'scientists must be People cards');
 
 export const ThreatSchema: z.ZodType<ThreatDef> = z
   .object({
@@ -60,6 +66,7 @@ export const RulesSchema: z.ZodType<Rules> = z
     advanceByYear: z.array(z.number().int().min(0)).min(1),
     moraleEffort: z.object({ high: positive, low: positive }).strict(),
     quarterlyMoraleLoss: z.number().int().min(0),
+    burnoutMoraleLoss: z.number().int().min(0),
     start: z.object({ budget: positive, secrecy: positive, morale: positive }).strict(),
     max: z.object({ secrecy: positive, morale: positive }).strict(),
   })

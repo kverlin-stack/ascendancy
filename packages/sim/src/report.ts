@@ -18,6 +18,7 @@ export function formatReport(
   lines.push(
     `Avg turns survived   ${sum.avgTurns.toFixed(1)}  (wins ${sum.avgTurnsWins.toFixed(1)}, losses ${sum.avgTurnsLosses.toFixed(1)})`,
   );
+  lines.push(`Scientists burned out ${sum.avgBurnedOut.toFixed(2)} per run`);
   lines.push('');
   lines.push(`Losses by cause (${losses})`);
   const causes = Object.entries(sum.lossCauses).sort((a, b) => b[1] - a[1]);

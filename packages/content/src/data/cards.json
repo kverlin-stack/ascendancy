@@ -161,5 +161,127 @@
         "amount": 2
       }
     ]
+  },
+  {
+    "id": "dr-ilse-varnholt",
+    "name": "Dr. Ilse Varnholt",
+    "type": "people",
+    "cost": 1,
+    "text": "+5 Progress.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 5
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 3,
+      "role": "Theoretical physicist. Brilliant, sleeps in the lab."
+    }
+  },
+  {
+    "id": "col-august-rhee",
+    "name": "Col. August Rhee",
+    "type": "people",
+    "cost": 1,
+    "text": "Fortify 3. +2 Progress.",
+    "effects": [
+      {
+        "type": "fortify",
+        "amount": 3
+      },
+      {
+        "type": "addProgress",
+        "amount": 2
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 3,
+      "role": "Ballistics engineer on loan from the army."
+    }
+  },
+  {
+    "id": "prof-tomas-brecken",
+    "name": "Prof. Tomas Brecken",
+    "type": "people",
+    "cost": 2,
+    "text": "+6 Progress. Draw 1.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 6
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 4,
+      "role": "Chief engineer. Methodical, never late."
+    }
+  },
+  {
+    "id": "dr-mirela-os",
+    "name": "Dr. Mirela Os",
+    "type": "people",
+    "cost": 1,
+    "text": "+4 Secrecy. +2 Progress.",
+    "effects": [
+      {
+        "type": "protectSecrecy",
+        "amount": 4
+      },
+      {
+        "type": "addProgress",
+        "amount": 2
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 4,
+      "role": "Cryptographer who trusts no one."
+    }
+  },
+  {
+    "id": "dr-hana-lisovska",
+    "name": "Dr. Hana Lisovska",
+    "type": "people",
+    "cost": 0,
+    "text": "+3 Progress. -1 Morale.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 3
+      },
+      {
+        "type": "gainMorale",
+        "amount": -1
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 3,
+      "role": "Chemist. Fast, reckless, usually right."
+    }
+  },
+  {
+    "id": "dr-edda-sorvik",
+    "name": "Dr. Edda Sorvik",
+    "type": "people",
+    "cost": 1,
+    "text": "+3 Morale. Rest all scientists 1.",
+    "effects": [
+      {
+        "type": "gainMorale",
+        "amount": 3
+      },
+      {
+        "type": "restScientists",
+        "amount": 1
+      }
+    ],
+    "scientist": {
+      "burnoutLimit": 4,
+      "role": "Staff physician. Keeps everyone else standing."
+    }
   }
 ]

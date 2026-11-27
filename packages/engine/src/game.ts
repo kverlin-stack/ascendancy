@@ -53,6 +53,8 @@ export function newGame(content: GameContent, seed: number | string): GameState 
     drawPile: rng.shuffle(deck),
     hand: [],
     discard: [],
+    lost: [],
+    burnout: {},
     threatId: '',
     nextUid: deck.length + 1,
     log: [],
@@ -117,9 +119,22 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   const card = getCard(content, inst.cardId);
   s.effort -= card.cost;
   for (const effect of card.effects) applyCardEffect(s, effect, content, rng);
-  // Discard after effects, so a drawCards reshuffle can't pull the card straight back.
-  s.discard.push(inst);
   s.log.push(`T${s.turn}: played ${card.name}`);
+  // Discard after effects, so a drawCards reshuffle can't pull the card straight back.
+  if (card.scientist) {
+    const b = (s.burnout[inst.uid] ?? 0) + 1;
+    if (b >= card.scientist.burnoutLimit) {
+      s.lost.push(inst);
+      delete s.burnout[inst.uid];
+      s.resources.morale = Math.max(0, s.resources.morale - content.rules.burnoutMoraleLoss);
+      s.log.push(`T${s.turn}: ${card.name} burned out and left the program`);
+    } else {
+      s.burnout[inst.uid] = b;
+      s.discard.push(inst);
+    }
+  } else {
+    s.discard.push(inst);
+  }
   if (s.resources.progress >= content.rules.progressGoal) {
     s.phase = 'won';
     s.log.push(`T${s.turn}: Project Sunfire complete`);
@@ -160,7 +175,8 @@ function endTurn(state: GameState, content: GameContent): GameState {
     return s;
   }
 
-  // 4. Discard, start the next turn.
+  // 4. Scientists left unplayed in hand rest, then discard and start the next turn.
+  for (const inst of s.hand) rest(s, inst.uid, 1);
   s.discard.push(...s.hand);
   s.hand = [];
   s.turn += 1;
@@ -206,6 +222,9 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
     case 'drawCards':
       drawCards(s, e.amount, rng);
       return;
+    case 'restScientists':
+      for (const uid of Object.keys(s.burnout)) rest(s, Number(uid), e.amount);
+      return;
   }
 }
 
@@ -225,6 +244,14 @@ function applyThreatEffect(s: GameState, e: ThreatEffect): void {
       r.morale = Math.max(0, r.morale - e.amount);
       return;
   }
+}
+
+/** Lower a scientist's Burnout (no-op for other cards). */
+function rest(s: GameState, uid: number, amount: number): void {
+  const b = s.burnout[uid];
+  if (b === undefined) return;
+  if (b - amount <= 0) delete s.burnout[uid];
+  else s.burnout[uid] = b - amount;
 }
 
 /** Front loss, absorbed first by this turn's Fortify. */
@@ -261,6 +288,8 @@ export function cloneState(s: GameState): GameState {
     drawPile: s.drawPile.slice(),
     hand: s.hand.slice(),
     discard: s.discard.slice(),
+    lost: s.lost.slice(),
+    burnout: { ...s.burnout },
     log: s.log.slice(),
   };
 }

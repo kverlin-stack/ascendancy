@@ -19,6 +19,8 @@ export interface Bot {
 
 /** Value of drawing one card, since the bot can't see what it will draw. */
 const DRAW_VALUE = 1.5;
+/** Long-term cost of losing a scientist for the run, beyond the Morale hit. */
+const BURNOUT_PENALTY = 6;
 /** How much each resource matters when it gets low. Higher = defended harder. */
 const DANGER = { front: 24, secrecy: 10, budget: 10, morale: 10 };
 
@@ -97,6 +99,9 @@ export const greedyBot: Bot = {
       const after = applyAction(state, { type: 'playCard', uid: inst.uid }, content);
       let gain = evaluate(after, content) - base;
       for (const e of card.effects) if (e.type === 'drawCards') gain += DRAW_VALUE * e.amount;
+      if (card.scientist && (state.burnout[inst.uid] ?? 0) + 1 >= card.scientist.burnoutLimit) {
+        gain -= BURNOUT_PENALTY;
+      }
       if (gain > 0 && (!best || gain > best.gain)) best = { uid: inst.uid, gain };
     }
     return best ? { type: 'playCard', uid: best.uid } : { type: 'endTurn' };

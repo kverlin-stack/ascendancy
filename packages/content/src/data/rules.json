@@ -1,7 +1,7 @@
 {
   "handSize": 5,
   "effortPerTurn": 3,
-  "progressGoal": 60,
+  "progressGoal": 75,
   "frontTerritories": 10,
   "turnsPerQuarter": 3,
   "quartersPerYear": 4,
@@ -11,6 +11,7 @@
     "low": 3
   },
   "quarterlyMoraleLoss": 1,
+  "burnoutMoraleLoss": 2,
   "start": {
     "budget": 12,
     "secrecy": 10,

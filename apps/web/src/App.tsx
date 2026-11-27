@@ -33,7 +33,7 @@ const STAT_INFO: Record<StatKey, string> = {
   budget:
     'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
   morale:
-    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 1 every quarter, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
+    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 1 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
 };
 
 const LOSS_TEXT: Record<string, string> = {
@@ -154,6 +154,7 @@ export function App() {
         <span className="muted">
           {' '}
           · deck {state.drawPile.length} · discard {state.discard.length}
+          {state.lost.length > 0 && ` · lost ${state.lost.length}`}
         </span>
       </section>
 
@@ -170,8 +171,11 @@ export function App() {
             >
               <span className="cost">{card.cost}</span>
               <span className="name">{card.name}</span>
-              <span className="type">{TYPE_LABEL[card.type]}</span>
+              <span className="type">{card.scientist ? 'Scientist' : TYPE_LABEL[card.type]}</span>
               <span className="text">{card.text}</span>
+              {card.scientist && (
+                <Burnout used={state.burnout[inst.uid] ?? 0} limit={card.scientist.burnoutLimit} />
+              )}
             </button>
           );
         })}
@@ -207,6 +211,21 @@ export function App() {
         </div>
       )}
     </main>
+  );
+}
+
+/** Burnout meter: filled pips are used up; the last pip is the burnout play. */
+function Burnout({ used, limit }: { used: number; limit: number }) {
+  const left = limit - used;
+  return (
+    <span className="burnout" title="Burnout">
+      {Array.from({ length: limit }, (_, i) => (
+        <span key={i} className={i < used ? 'bpip used' : 'bpip'} />
+      ))}
+      <span className={left === 1 ? 'warn' : 'muted'}>
+        {left === 1 ? 'Burns out if played' : `${left} plays left`}
+      </span>
+    </span>
   );
 }
 

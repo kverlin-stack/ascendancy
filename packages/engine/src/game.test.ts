@@ -249,6 +249,50 @@ describe('morale', () => {
   });
 });
 
+describe('burnout', () => {
+  it('each play adds Burnout to that copy only', () => {
+    const s0 = withHand(newGame(content, 1), ['ace', 'ace']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.burnout).toEqual({ 1000: 1 });
+    expect(s1.discard.some((c) => c.uid === 1000)).toBe(true);
+  });
+
+  it('at the limit the scientist is lost for the run and Morale drops', () => {
+    const s0 = withHand(newGame(content, 1), ['ace']);
+    s0.burnout = { 1000: 1 };
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.resources.progress).toBe(3); // the last play still resolves
+    expect(s1.lost.map((c) => c.uid)).toEqual([1000]);
+    expect(s1.discard.some((c) => c.uid === 1000)).toBe(false);
+    expect(s1.burnout[1000]).toBeUndefined();
+    expect(s1.resources.morale).toBe(3);
+  });
+
+  it('a lost scientist never comes back through reshuffles', () => {
+    const s0 = withHand(newGame(content, 1), ['ace']);
+    s0.burnout = { 1000: 1 };
+    let s = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    for (let i = 0; i < 8; i++) {
+      s = applyAction(s, { type: 'endTurn' }, content);
+      expect(s.hand.some((c) => c.uid === 1000)).toBe(false);
+    }
+  });
+
+  it('a scientist left unplayed in hand rests 1 at end of turn', () => {
+    const s0 = withHand(newGame(content, 1), ['ace']);
+    s0.burnout = { 1000: 1 };
+    const s1 = applyAction(s0, { type: 'endTurn' }, content);
+    expect(s1.burnout[1000]).toBeUndefined();
+  });
+
+  it('restScientists lowers Burnout across the deck', () => {
+    const s0 = withHand(newGame(content, 1), ['leave']);
+    s0.burnout = { 1: 1, 2: 3 };
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.burnout).toEqual({ 2: 2 });
+  });
+});
+
 describe('replays', () => {
   it('the same seed and actions always produce the same run', () => {
     const play = (): GameState => {

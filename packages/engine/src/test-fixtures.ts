@@ -13,10 +13,28 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       advanceByYear: [1, 2, 3],
       moraleEffort: { high: 8, low: 2 },
       quarterlyMoraleLoss: 0,
+      burnoutMoraleLoss: 2,
       start: { budget: 5, secrecy: 5, morale: 5 },
       max: { secrecy: 10, morale: 10 },
     },
     cards: [
+      {
+        id: 'ace',
+        name: 'Ace',
+        type: 'people',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'addProgress', amount: 3 }],
+        scientist: { burnoutLimit: 2, role: 'test' },
+      },
+      {
+        id: 'leave',
+        name: 'Leave',
+        type: 'people',
+        cost: 0,
+        text: '',
+        effects: [{ type: 'restScientists', amount: 1 }],
+      },
       {
         id: 'wall',
         name: 'Wall',

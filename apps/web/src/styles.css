@@ -303,3 +303,33 @@ button {
   font-size: 13px;
   color: var(--held);
 }
+
+.burnout {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  margin-top: auto;
+}
+
+.bpip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1.5px solid var(--people);
+}
+
+.bpip.used {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.burnout .muted,
+.burnout .warn {
+  margin-left: 4px;
+}
+
+.burnout .warn {
+  color: var(--accent);
+  font-weight: 700;
+}

@@ -7,6 +7,8 @@ export interface RunResult {
   turns: number;
   lossCause: LossCause | 'stalled' | null;
   finalProgress: number;
+  /** Scientists lost to Burnout this run. */
+  burnedOut: number;
   cardPlays: Record<string, number>;
 }
 
@@ -35,6 +37,7 @@ export function playRun(content: GameContent, bot: Bot, seed: number): RunResult
     turns: s.turn,
     lossCause: s.phase === 'playing' ? 'stalled' : s.lossCause,
     finalProgress: s.resources.progress,
+    burnedOut: s.lost.length,
     cardPlays,
   };
 }
@@ -46,6 +49,7 @@ export interface SimSummary {
   avgTurns: number;
   avgTurnsWins: number;
   avgTurnsLosses: number;
+  avgBurnedOut: number;
   lossCauses: Record<string, number>;
   /** Average plays per run of each card, in won and lost runs. */
   cardPlays: Record<string, { wins: number; losses: number }>;
@@ -82,6 +86,7 @@ export function runSims(
     avgTurns: avg(results.map((r) => r.turns)),
     avgTurnsWins: avg(wins.map((r) => r.turns)),
     avgTurnsLosses: avg(losses.map((r) => r.turns)),
+    avgBurnedOut: avg(results.map((r) => r.burnedOut)),
     lossCauses,
     cardPlays,
     results,
