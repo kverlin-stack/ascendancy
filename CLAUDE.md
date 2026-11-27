@@ -54,4 +54,4 @@ A single-player roguelike deckbuilder for phones, told in two acts. The full des
 4. **Act II build:** stages, crew, destinations, Legacy, colony ending. *Gate: win rates in target ranges.*
 5. **Launch:** Capacitor builds, free Act I + Act II unlock, store listings.
 
-Current phase: **0**.
+Current phase: **1**.

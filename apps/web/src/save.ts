@@ -21,3 +21,11 @@ export function saveRun(state: GameState): void {
     // Private mode or full storage: the run still plays, it just won't resume.
   }
 }
+
+export function clearRun(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // Nothing to clear.
+  }
+}
