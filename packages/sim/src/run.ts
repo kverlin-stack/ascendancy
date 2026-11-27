@@ -9,6 +9,9 @@ export interface RunResult {
   finalProgress: number;
   /** Scientists lost to Burnout this run. */
   burnedOut: number;
+  /** Card ids offered and picked at quarterly rewards. */
+  offered: string[];
+  picked: string[];
   cardPlays: Record<string, number>;
 }
 
@@ -18,8 +21,15 @@ const MAX_ACTIONS = 5000;
 export function playRun(content: GameContent, bot: Bot, seed: number): RunResult {
   let s = newGame(content, seed);
   const cardPlays: Record<string, number> = {};
-  for (let i = 0; i < MAX_ACTIONS && s.phase === 'playing'; i++) {
+  const offered: string[] = [];
+  const picked: string[] = [];
+  const active = () => s.phase === 'playing' || s.phase === 'reward';
+  for (let i = 0; i < MAX_ACTIONS && active(); i++) {
     const action = bot.chooseAction(s, content);
+    if (action.type === 'chooseReward') {
+      offered.push(...s.rewardOptions);
+      if (action.cardId) picked.push(action.cardId);
+    }
     if (action.type === 'playCard') {
       const id = s.hand.find((c) => c.uid === action.uid)?.cardId;
       if (id) cardPlays[id] = (cardPlays[id] ?? 0) + 1;
@@ -35,9 +45,11 @@ export function playRun(content: GameContent, bot: Bot, seed: number): RunResult
     seed,
     won: s.phase === 'won',
     turns: s.turn,
-    lossCause: s.phase === 'playing' ? 'stalled' : s.lossCause,
+    lossCause: active() ? 'stalled' : s.lossCause,
     finalProgress: s.resources.progress,
-    burnedOut: s.lost.length,
+    burnedOut: s.lost.filter((c) => content.cards.find((d) => d.id === c.cardId)?.scientist).length,
+    offered,
+    picked,
     cardPlays,
   };
 }
@@ -53,6 +65,8 @@ export interface SimSummary {
   lossCauses: Record<string, number>;
   /** Average plays per run of each card, in won and lost runs. */
   cardPlays: Record<string, { wins: number; losses: number }>;
+  /** Per card: times offered, times picked, and win rate of runs that picked it. */
+  picks: Record<string, { offered: number; picked: number; winRateWhenPicked: number }>;
   results: RunResult[];
 }
 
@@ -79,6 +93,19 @@ export function runSims(
     cardPlays[card.id] = { wins: per(wins), losses: per(losses) };
   }
 
+  const picks: SimSummary['picks'] = {};
+  for (const card of content.cards) {
+    if (card.rarity === 'starter') continue;
+    const pickedIn = results.filter((r) => r.picked.includes(card.id));
+    picks[card.id] = {
+      offered: results.reduce((n, r) => n + r.offered.filter((id) => id === card.id).length, 0),
+      picked: results.reduce((n, r) => n + r.picked.filter((id) => id === card.id).length, 0),
+      winRateWhenPicked: pickedIn.length
+        ? pickedIn.filter((r) => r.won).length / pickedIn.length
+        : 0,
+    };
+  }
+
   return {
     runs,
     wins: wins.length,
@@ -89,6 +116,7 @@ export function runSims(
     avgBurnedOut: avg(results.map((r) => r.burnedOut)),
     lossCauses,
     cardPlays,
+    picks,
     results,
   };
 }

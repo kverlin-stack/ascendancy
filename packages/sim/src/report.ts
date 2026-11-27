@@ -34,6 +34,17 @@ export function formatReport(
       `  ${card.name.padEnd(20)} ${p.wins.toFixed(2).padStart(7)}   ${p.losses.toFixed(2).padStart(9)}`,
     );
   }
+  lines.push('');
+  lines.push('Quarterly picks         offered  picked  win% when picked');
+  for (const card of content.cards) {
+    const p = sum.picks[card.id];
+    if (!p) continue;
+    const rate = p.offered ? pct(p.picked, p.offered) : '-';
+    const win = p.picked ? pct(p.winRateWhenPicked * 100, 100) : '-';
+    lines.push(
+      `  ${card.name.padEnd(24)} ${String(p.offered).padStart(5)}  ${rate.padStart(6)}  ${win.padStart(8)}`,
+    );
+  }
   if (opts.verbose) {
     lines.push('');
     lines.push('Each loss (seed: cause, turn, progress)');

@@ -12,6 +12,14 @@
   },
   "quarterlyMoraleLoss": 1,
   "burnoutMoraleLoss": 2,
+  "reward": {
+    "choices": 3,
+    "weights": {
+      "common": 6,
+      "uncommon": 3,
+      "rare": 1
+    }
+  },
   "start": {
     "budget": 12,
     "secrecy": 10,

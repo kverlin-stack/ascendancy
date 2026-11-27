@@ -194,7 +194,46 @@ export function App() {
         </button>
       </footer>
 
-      {state.phase !== 'playing' && (
+      {state.phase === 'reward' && (
+        <div className="overlay" role="dialog" aria-modal="true">
+          <div className="panel reward">
+            <h2>Q{quarterOf(state.turn, rules)} report</h2>
+            <p className="muted">Recruit one card into your deck, or skip.</p>
+            <div className="hand">
+              {state.rewardOptions.map((id) => {
+                const card = getCard(content, id);
+                return (
+                  <button
+                    key={id}
+                    className={`card ${card.type}`}
+                    onClick={() => act({ type: 'chooseReward', cardId: id })}
+                  >
+                    <span className="cost">{card.cost}</span>
+                    <span className="name">{card.name}</span>
+                    <span className="type">
+                      {card.scientist ? 'Scientist' : TYPE_LABEL[card.type]} · {card.rarity}
+                    </span>
+                    <span className="text">{card.text}</span>
+                    {card.scientist && (
+                      <span className="role muted">
+                        {card.scientist.role} Burnout {card.scientist.burnoutLimit}.
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              className="link skip"
+              onClick={() => act({ type: 'chooseReward', cardId: null })}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(state.phase === 'won' || state.phase === 'lost') && (
         <div className="overlay" role="dialog" aria-modal="true">
           <div className="panel">
             <h2>{state.phase === 'won' ? 'Sunfire is complete' : 'The war is lost'}</h2>

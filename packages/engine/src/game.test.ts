@@ -13,6 +13,10 @@ function withHand(state: GameState, cardIds: string[]): GameState {
   return s;
 }
 
+function skipReward(s: GameState, c: GameContent = content): GameState {
+  return s.phase === 'reward' ? applyAction(s, { type: 'chooseReward', cardId: null }, c) : s;
+}
+
 function cardCount(s: GameState): number {
   return s.drawPile.length + s.hand.length + s.discard.length;
 }
@@ -161,7 +165,7 @@ describe('endTurn', () => {
     let s = newGame(content, 1);
     const fronts: number[] = [];
     for (let i = 0; i < 15; i++) {
-      s = applyAction(s, { type: 'endTurn' }, content);
+      s = skipReward(applyAction(s, { type: 'endTurn' }, content));
       fronts.push(s.resources.front);
     }
     // Year 1 advance 1 at turns 3, 6, 9, 12; year 2 advance 2 at turn 15.
@@ -244,7 +248,7 @@ describe('morale', () => {
     const c = testContent();
     c.rules.quarterlyMoraleLoss = 1;
     let s = newGame(c, 1);
-    for (let i = 0; i < 6; i++) s = applyAction(s, { type: 'endTurn' }, c);
+    for (let i = 0; i < 6; i++) s = skipReward(applyAction(s, { type: 'endTurn' }, c), c);
     expect(s.resources.morale).toBe(3);
   });
 });
@@ -268,12 +272,19 @@ describe('burnout', () => {
     expect(s1.resources.morale).toBe(3);
   });
 
+  it('cannot burn out a scientist if the Morale hit would end the run', () => {
+    const s0 = withHand(newGame(content, 1), ['ace']);
+    s0.burnout = { 1000: 1 };
+    s0.resources.morale = 2;
+    expect(canPlay(s0, 1000, content)).toBe(false);
+  });
+
   it('a lost scientist never comes back through reshuffles', () => {
     const s0 = withHand(newGame(content, 1), ['ace']);
     s0.burnout = { 1000: 1 };
     let s = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
     for (let i = 0; i < 8; i++) {
-      s = applyAction(s, { type: 'endTurn' }, content);
+      s = skipReward(applyAction(s, { type: 'endTurn' }, content));
       expect(s.hand.some((c) => c.uid === 1000)).toBe(false);
     }
   });
@@ -293,6 +304,63 @@ describe('burnout', () => {
   });
 });
 
+describe('quarterly card picks', () => {
+  const atQuarterEnd = (): GameState => ({ ...newGame(content, 1), turn: 3 });
+
+  it('after a quarter ends, 3 distinct non-starter cards are offered before the next turn', () => {
+    const s = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
+    expect(s.phase).toBe('reward');
+    expect(s.turn).toBe(3);
+    expect(s.hand).toHaveLength(0);
+    expect(new Set(s.rewardOptions).size).toBe(3);
+    for (const id of s.rewardOptions) expect(getCard(content, id).rarity).not.toBe('starter');
+  });
+
+  it('no pick after a turn that is not a quarter end', () => {
+    expect(applyAction(newGame(content, 1), { type: 'endTurn' }, content).phase).toBe('playing');
+  });
+
+  it('picking adds the card to the discard pile and starts the next turn', () => {
+    const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
+    const pick = s1.rewardOptions[0] as string;
+    const total = cardCount(s1);
+    const s2 = applyAction(s1, { type: 'chooseReward', cardId: pick }, content);
+    expect(s2.phase).toBe('playing');
+    expect(s2.turn).toBe(4);
+    expect(s2.hand).toHaveLength(5);
+    expect(cardCount(s2)).toBe(total + 1);
+    expect([...s2.drawPile, ...s2.hand, ...s2.discard].some((c) => c.cardId === pick)).toBe(true);
+    expect(s2.rewardOptions).toEqual([]);
+  });
+
+  it('skipping adds nothing', () => {
+    const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
+    const s2 = applyAction(s1, { type: 'chooseReward', cardId: null }, content);
+    expect(cardCount(s2)).toBe(cardCount(s1));
+    expect(s2.turn).toBe(4);
+  });
+
+  it('ignores cards that were not offered, and other actions during the pick', () => {
+    const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
+    const notOffered = content.cards.find((c) => !s1.rewardOptions.includes(c.id))!.id;
+    expect(applyAction(s1, { type: 'chooseReward', cardId: notOffered }, content)).toBe(s1);
+    expect(applyAction(s1, { type: 'endTurn' }, content)).toBe(s1);
+    expect(
+      applyAction(newGame(content, 1), { type: 'chooseReward', cardId: null }, content).phase,
+    ).toBe('playing');
+  });
+});
+
+describe('exhaust', () => {
+  it('an exhaust card is removed for the run after it is played', () => {
+    const s0 = withHand(newGame(content, 1), ['r1']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.resources.progress).toBe(5);
+    expect(s1.lost.map((c) => c.uid)).toEqual([1000]);
+    expect(s1.discard.some((c) => c.uid === 1000)).toBe(false);
+  });
+});
+
 describe('replays', () => {
   it('the same seed and actions always produce the same run', () => {
     const play = (): GameState => {
@@ -303,7 +371,7 @@ describe('replays', () => {
             s = applyAction(s, { type: 'playCard', uid: inst.uid }, content);
           }
         }
-        s = applyAction(s, { type: 'endTurn' }, content);
+        s = skipReward(applyAction(s, { type: 'endTurn' }, content));
       }
       return s;
     };

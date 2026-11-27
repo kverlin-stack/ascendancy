@@ -333,3 +333,27 @@ button {
   color: var(--accent);
   font-weight: 700;
 }
+
+.panel.reward {
+  text-align: left;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.panel.reward h2 {
+  margin: 0 0 4px;
+}
+
+.panel.reward .hand {
+  margin: 12px 0;
+}
+
+.role {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.skip {
+  width: 100%;
+  padding: 10px;
+}

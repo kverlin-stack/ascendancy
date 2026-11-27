@@ -3,6 +3,7 @@
     "id": "lab-work",
     "name": "Lab Work",
     "type": "research",
+    "rarity": "starter",
     "cost": 1,
     "text": "+2 Progress.",
     "effects": [
@@ -16,6 +17,7 @@
     "id": "night-shift",
     "name": "Night Shift",
     "type": "research",
+    "rarity": "common",
     "cost": 1,
     "text": "+3 Progress. -1 Morale.",
     "effects": [
@@ -33,6 +35,7 @@
     "id": "prototype-run",
     "name": "Prototype Run",
     "type": "research",
+    "rarity": "starter",
     "cost": 2,
     "text": "+5 Progress. -2 Budget.",
     "effects": [
@@ -50,6 +53,7 @@
     "id": "open-air-test",
     "name": "Open-Air Test",
     "type": "research",
+    "rarity": "starter",
     "cost": 1,
     "text": "+4 Progress. -2 Secrecy.",
     "effects": [
@@ -67,6 +71,7 @@
     "id": "dig-in",
     "name": "Dig In",
     "type": "warEffort",
+    "rarity": "starter",
     "cost": 1,
     "text": "Fortify 2: block the next 2 Front lost this turn.",
     "effects": [
@@ -80,6 +85,7 @@
     "id": "counteroffensive",
     "name": "Counteroffensive",
     "type": "warEffort",
+    "rarity": "starter",
     "cost": 2,
     "text": "Push the Front back 2. +1 Morale.",
     "effects": [
@@ -97,6 +103,7 @@
     "id": "counterintelligence",
     "name": "Counterintelligence",
     "type": "security",
+    "rarity": "starter",
     "cost": 1,
     "text": "+3 Secrecy.",
     "effects": [
@@ -110,6 +117,7 @@
     "id": "cover-story",
     "name": "Cover Story",
     "type": "security",
+    "rarity": "common",
     "cost": 0,
     "text": "+1 Secrecy. Draw 1.",
     "effects": [
@@ -127,6 +135,7 @@
     "id": "ministers-favor",
     "name": "Minister's Favor",
     "type": "people",
+    "rarity": "starter",
     "cost": 1,
     "text": "+3 Budget.",
     "effects": [
@@ -140,6 +149,7 @@
     "id": "rally-the-workers",
     "name": "Rally the Workers",
     "type": "people",
+    "rarity": "starter",
     "cost": 1,
     "text": "+3 Morale.",
     "effects": [
@@ -153,6 +163,7 @@
     "id": "morning-briefing",
     "name": "Morning Briefing",
     "type": "people",
+    "rarity": "starter",
     "cost": 0,
     "text": "Draw 2.",
     "effects": [
@@ -163,9 +174,275 @@
     ]
   },
   {
+    "id": "peer-review",
+    "name": "Peer Review",
+    "type": "research",
+    "rarity": "common",
+    "cost": 1,
+    "text": "+2 Progress. Draw 1.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 2
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "wind-tunnel",
+    "name": "Wind Tunnel",
+    "type": "research",
+    "rarity": "common",
+    "cost": 1,
+    "text": "+3 Progress. -1 Budget.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 3
+      },
+      {
+        "type": "gainBudget",
+        "amount": -1
+      }
+    ]
+  },
+  {
+    "id": "requisitioned-mainframe",
+    "name": "Requisitioned Mainframe",
+    "type": "research",
+    "rarity": "uncommon",
+    "cost": 2,
+    "text": "+7 Progress. -2 Budget. -1 Secrecy.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 7
+      },
+      {
+        "type": "gainBudget",
+        "amount": -2
+      },
+      {
+        "type": "protectSecrecy",
+        "amount": -1
+      }
+    ]
+  },
+  {
+    "id": "eureka",
+    "name": "Eureka",
+    "type": "research",
+    "rarity": "rare",
+    "cost": 0,
+    "text": "+6 Progress. Exhaust.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 6
+      }
+    ],
+    "exhaust": true
+  },
+  {
+    "id": "trench-lines",
+    "name": "Trench Lines",
+    "type": "warEffort",
+    "rarity": "common",
+    "cost": 1,
+    "text": "Fortify 3.",
+    "effects": [
+      {
+        "type": "fortify",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "partisan-raid",
+    "name": "Partisan Raid",
+    "type": "warEffort",
+    "rarity": "common",
+    "cost": 1,
+    "text": "Push the Front back 1. +1 Morale.",
+    "effects": [
+      {
+        "type": "pushFront",
+        "amount": 1
+      },
+      {
+        "type": "gainMorale",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "armored-reserve",
+    "name": "Armored Reserve",
+    "type": "warEffort",
+    "rarity": "uncommon",
+    "cost": 2,
+    "text": "Fortify 3. Push the Front back 1.",
+    "effects": [
+      {
+        "type": "fortify",
+        "amount": 3
+      },
+      {
+        "type": "pushFront",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "grand-counterstroke",
+    "name": "Grand Counterstroke",
+    "type": "warEffort",
+    "rarity": "rare",
+    "cost": 3,
+    "text": "Push the Front back 4. +2 Morale. Exhaust.",
+    "effects": [
+      {
+        "type": "pushFront",
+        "amount": 4
+      },
+      {
+        "type": "gainMorale",
+        "amount": 2
+      }
+    ],
+    "exhaust": true
+  },
+  {
+    "id": "double-agent",
+    "name": "Double Agent",
+    "type": "security",
+    "rarity": "uncommon",
+    "cost": 1,
+    "text": "+3 Secrecy. Draw 1.",
+    "effects": [
+      {
+        "type": "protectSecrecy",
+        "amount": 3
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "disinformation",
+    "name": "Disinformation",
+    "type": "security",
+    "rarity": "common",
+    "cost": 1,
+    "text": "+2 Secrecy. Fortify 1.",
+    "effects": [
+      {
+        "type": "protectSecrecy",
+        "amount": 2
+      },
+      {
+        "type": "fortify",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "sealed-compound",
+    "name": "Sealed Compound",
+    "type": "security",
+    "rarity": "rare",
+    "cost": 2,
+    "text": "+6 Secrecy. +1 Morale.",
+    "effects": [
+      {
+        "type": "protectSecrecy",
+        "amount": 6
+      },
+      {
+        "type": "gainMorale",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "war-bonds",
+    "name": "War Bonds",
+    "type": "people",
+    "rarity": "common",
+    "cost": 1,
+    "text": "+4 Budget. -1 Morale.",
+    "effects": [
+      {
+        "type": "gainBudget",
+        "amount": 4
+      },
+      {
+        "type": "gainMorale",
+        "amount": -1
+      }
+    ]
+  },
+  {
+    "id": "coffee-ration",
+    "name": "Coffee Ration",
+    "type": "people",
+    "rarity": "common",
+    "cost": 0,
+    "text": "+1 Morale. Draw 1.",
+    "effects": [
+      {
+        "type": "gainMorale",
+        "amount": 1
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "leave-of-absence",
+    "name": "Leave of Absence",
+    "type": "people",
+    "rarity": "uncommon",
+    "cost": 1,
+    "text": "Rest all scientists 2. +1 Morale.",
+    "effects": [
+      {
+        "type": "restScientists",
+        "amount": 2
+      },
+      {
+        "type": "gainMorale",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "emergency-appropriation",
+    "name": "Emergency Appropriation",
+    "type": "people",
+    "rarity": "rare",
+    "cost": 0,
+    "text": "+6 Budget. Exhaust.",
+    "effects": [
+      {
+        "type": "gainBudget",
+        "amount": 6
+      }
+    ],
+    "exhaust": true
+  },
+  {
     "id": "dr-ilse-varnholt",
     "name": "Dr. Ilse Varnholt",
     "type": "people",
+    "rarity": "starter",
     "cost": 1,
     "text": "+5 Progress.",
     "effects": [
@@ -183,6 +460,7 @@
     "id": "col-august-rhee",
     "name": "Col. August Rhee",
     "type": "people",
+    "rarity": "starter",
     "cost": 1,
     "text": "Fortify 3. +2 Progress.",
     "effects": [
@@ -204,6 +482,7 @@
     "id": "prof-tomas-brecken",
     "name": "Prof. Tomas Brecken",
     "type": "people",
+    "rarity": "rare",
     "cost": 2,
     "text": "+6 Progress. Draw 1.",
     "effects": [
@@ -225,6 +504,7 @@
     "id": "dr-mirela-os",
     "name": "Dr. Mirela Os",
     "type": "people",
+    "rarity": "uncommon",
     "cost": 1,
     "text": "+4 Secrecy. +2 Progress.",
     "effects": [
@@ -246,6 +526,7 @@
     "id": "dr-hana-lisovska",
     "name": "Dr. Hana Lisovska",
     "type": "people",
+    "rarity": "uncommon",
     "cost": 0,
     "text": "+3 Progress. -1 Morale.",
     "effects": [
@@ -267,6 +548,7 @@
     "id": "dr-edda-sorvik",
     "name": "Dr. Edda Sorvik",
     "type": "people",
+    "rarity": "uncommon",
     "cost": 1,
     "text": "+3 Morale. Rest all scientists 1.",
     "effects": [

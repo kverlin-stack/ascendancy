@@ -5,6 +5,9 @@
 
 export type CardType = 'research' | 'warEffort' | 'security' | 'people';
 
+/** 'starter' cards only come from the starting deck; the rest can be offered as picks. */
+export type Rarity = 'starter' | 'common' | 'uncommon' | 'rare';
+
 /** Effect primitives a card can use. Negative amounts spend the resource. */
 export type CardEffect =
   | { type: 'addProgress'; amount: number }
@@ -36,9 +39,12 @@ export interface CardDef {
   id: string;
   name: string;
   type: CardType;
+  rarity: Rarity;
   cost: number;
   text: string;
   effects: CardEffect[];
+  /** Removed for the run after it's played. */
+  exhaust?: boolean | undefined;
   /** Present on scientist cards (People cards with a Burnout meter). */
   scientist?: ScientistTraits | undefined;
 }
@@ -68,6 +74,8 @@ export interface Rules {
   quarterlyMoraleLoss: number;
   /** Morale lost when a scientist burns out. */
   burnoutMoraleLoss: number;
+  /** Card picks offered after each quarter. */
+  reward: { choices: number; weights: { common: number; uncommon: number; rare: number } };
   start: { budget: number; secrecy: number; morale: number };
   max: { secrecy: number; morale: number };
 }
@@ -85,7 +93,8 @@ export interface CardInstance {
   cardId: string;
 }
 
-export type Phase = 'playing' | 'won' | 'lost';
+/** 'reward' = between quarters, waiting for the player to pick a card. */
+export type Phase = 'playing' | 'reward' | 'won' | 'lost';
 export type LossCause = 'front' | 'secrecy' | 'budget' | 'morale';
 
 export interface Resources {
@@ -98,7 +107,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 3;
+export const STATE_VERSION = 4;
 
 export interface GameState {
   version: number;
@@ -117,7 +126,9 @@ export interface GameState {
   drawPile: CardInstance[];
   hand: CardInstance[];
   discard: CardInstance[];
-  /** Cards gone for the run (burned-out scientists). */
+  /** Card ids offered in the 'reward' phase. */
+  rewardOptions: string[];
+  /** Cards gone for the run (burned-out scientists, exhausted cards). */
   lost: CardInstance[];
   /** Burnout per scientist card instance, keyed by uid. */
   burnout: Record<string, number>;
@@ -127,4 +138,8 @@ export interface GameState {
   log: string[];
 }
 
-export type Action = { type: 'playCard'; uid: number } | { type: 'endTurn' };
+export type Action =
+  | { type: 'playCard'; uid: number }
+  | { type: 'endTurn' }
+  /** Pick one of the offered cards, or null to skip. */
+  | { type: 'chooseReward'; cardId: string | null };

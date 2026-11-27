@@ -34,9 +34,11 @@ export const CardSchema: z.ZodType<CardDef> = z
     id,
     name: z.string().min(1),
     type: z.enum(['research', 'warEffort', 'security', 'people']),
+    rarity: z.enum(['starter', 'common', 'uncommon', 'rare']),
     cost: z.number().int().min(0).max(5),
     text: z.string().min(1),
     effects: z.array(CardEffectSchema).min(1),
+    exhaust: z.boolean().optional(),
     scientist: z
       .object({ burnoutLimit: z.number().int().min(1).max(9), role: z.string().min(1) })
       .strict()
@@ -67,6 +69,18 @@ export const RulesSchema: z.ZodType<Rules> = z
     moraleEffort: z.object({ high: positive, low: positive }).strict(),
     quarterlyMoraleLoss: z.number().int().min(0),
     burnoutMoraleLoss: z.number().int().min(0),
+    reward: z
+      .object({
+        choices: positive,
+        weights: z
+          .object({
+            common: z.number().min(0),
+            uncommon: z.number().min(0),
+            rare: z.number().min(0),
+          })
+          .strict(),
+      })
+      .strict(),
     start: z.object({ budget: positive, secrecy: positive, morale: positive }).strict(),
     max: z.object({ secrecy: positive, morale: positive }).strict(),
   })

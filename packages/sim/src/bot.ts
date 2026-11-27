@@ -7,6 +7,7 @@ import {
   isQuarterEnd,
   yearOf,
   type Action,
+  type CardDef,
   type GameContent,
   type GameState,
 } from '@ascendancy/engine';
@@ -91,6 +92,7 @@ function reserves(content: GameContent) {
 export const greedyBot: Bot = {
   name: 'greedy',
   chooseAction(state, content) {
+    if (state.phase === 'reward') return chooseRewardGreedy(state, content);
     const base = evaluate(state, content);
     let best: { uid: number; gain: number } | null = null;
     for (const inst of state.hand) {
@@ -107,3 +109,45 @@ export const greedyBot: Bot = {
     return best ? { type: 'playCard', uid: best.uid } : { type: 'endTurn' };
   },
 };
+
+/** Rough worth of one point of each effect, before scaling by need. */
+const EFFECT_VALUE: Record<CardDef['effects'][number]['type'], number> = {
+  addProgress: 1,
+  pushFront: 2.5,
+  fortify: 1.6,
+  gainBudget: 0.6,
+  protectSecrecy: 0.7,
+  gainMorale: 0.8,
+  drawCards: 1.3,
+  restScientists: 1,
+};
+
+/** Static card score for picks: value per Effort, weighted toward whatever resource is lowest. */
+export function cardValue(card: CardDef, state: GameState, content: GameContent): number {
+  const r = state.resources;
+  const need = (v: number, max: number) => 1 + Math.max(0, (max - v) / max) * 2;
+  const scale: Partial<Record<CardDef['effects'][number]['type'], number>> = {
+    pushFront: need(r.front, content.rules.frontTerritories),
+    fortify: need(r.front, content.rules.frontTerritories),
+    protectSecrecy: need(r.secrecy, content.rules.max.secrecy),
+    gainMorale: need(r.morale, content.rules.max.morale),
+    gainBudget: need(r.budget, content.rules.start.budget),
+  };
+  let v = 0;
+  for (const e of card.effects) {
+    const per = EFFECT_VALUE[e.type] * (scale[e.type] ?? 1);
+    v += e.amount > 0 ? per * e.amount : EFFECT_VALUE[e.type] * e.amount;
+  }
+  if (card.exhaust) v *= 0.5;
+  if (card.scientist) v *= Math.min(1.2, card.scientist.burnoutLimit / 3.5);
+  return v / (card.cost + 1);
+}
+
+function chooseRewardGreedy(state: GameState, content: GameContent): Action {
+  let best: { id: string; v: number } | null = null;
+  for (const id of state.rewardOptions) {
+    const v = cardValue(getCard(content, id), state, content);
+    if (!best || v > best.v) best = { id, v };
+  }
+  return { type: 'chooseReward', cardId: best && best.v > 0.8 ? best.id : null };
+}

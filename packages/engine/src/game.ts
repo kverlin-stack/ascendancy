@@ -19,12 +19,17 @@ import type {
  * Illegal actions return the input state unchanged.
  */
 export function applyAction(state: GameState, action: Action, content: GameContent): GameState {
+  if (state.phase === 'reward') {
+    return action.type === 'chooseReward' ? chooseReward(state, action.cardId, content) : state;
+  }
   if (state.phase !== 'playing') return state;
   switch (action.type) {
     case 'playCard':
       return canPlay(state, action.uid, content) ? playCard(state, action.uid, content) : state;
     case 'endTurn':
       return endTurn(state, content);
+    case 'chooseReward':
+      return state;
   }
 }
 
@@ -53,6 +58,7 @@ export function newGame(content: GameContent, seed: number | string): GameState 
     drawPile: rng.shuffle(deck),
     hand: [],
     discard: [],
+    rewardOptions: [],
     lost: [],
     burnout: {},
     threatId: '',
@@ -104,6 +110,10 @@ export function canPlay(state: GameState, uid: number, content: GameContent): bo
     if (e.type === 'gainMorale') morale += e.amount;
     if (e.type === 'protectSecrecy') secrecy += e.amount;
   }
+  // Burning out a scientist costs Morale too.
+  if (card.scientist && (state.burnout[uid] ?? 0) + 1 >= card.scientist.burnoutLimit) {
+    morale -= content.rules.burnoutMoraleLoss;
+  }
   const r = state.resources;
   if (budget < 0 && r.budget + budget <= 0) return false;
   if (morale < 0 && r.morale + morale <= 0) return false;
@@ -132,6 +142,8 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
       s.burnout[inst.uid] = b;
       s.discard.push(inst);
     }
+  } else if (card.exhaust) {
+    s.lost.push(inst);
   } else {
     s.discard.push(inst);
   }
@@ -175,17 +187,59 @@ function endTurn(state: GameState, content: GameContent): GameState {
     return s;
   }
 
-  // 4. Scientists left unplayed in hand rest, then discard and start the next turn.
+  // 4. Fortify expires. Scientists left unplayed in hand rest, then discard.
+  s.fortify = 0;
   for (const inst of s.hand) rest(s, inst.uid, 1);
   s.discard.push(...s.hand);
   s.hand = [];
-  s.turn += 1;
-  s.fortify = 0;
-  s.effort = s.maxEffort = effortForTurn(s, content);
-  drawCards(s, rules.handSize, rng);
-  s.threatId = pickThreat(content, rng).id;
+
+  // 5. After a quarter, offer a card pick before the next turn starts.
+  if (isQuarterEnd(s.turn, rules)) {
+    s.rewardOptions = pickRewardOptions(content, rng);
+    if (s.rewardOptions.length > 0) {
+      s.phase = 'reward';
+      s.rngState = rng.state;
+      return s;
+    }
+  }
+  startNextTurn(s, content, rng);
   s.rngState = rng.state;
   return s;
+}
+
+function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
+  s.turn += 1;
+  s.effort = s.maxEffort = effortForTurn(s, content);
+  drawCards(s, content.rules.handSize, rng);
+  s.threatId = pickThreat(content, rng).id;
+}
+
+function chooseReward(state: GameState, cardId: string | null, content: GameContent): GameState {
+  if (cardId !== null && !state.rewardOptions.includes(cardId)) return state;
+  const s = cloneState(state);
+  const rng = createRng(s.rngState);
+  if (cardId !== null) {
+    s.discard.push({ uid: s.nextUid++, cardId });
+    s.log.push(`T${s.turn}: recruited ${getCard(content, cardId).name}`);
+  }
+  s.rewardOptions = [];
+  s.phase = 'playing';
+  startNextTurn(s, content, rng);
+  s.rngState = rng.state;
+  return s;
+}
+
+/** Distinct non-starter cards, weighted by rarity. */
+export function pickRewardOptions(content: GameContent, rng: Rng): string[] {
+  const { weights, choices } = content.rules.reward;
+  let pool = content.cards.filter((c) => c.rarity !== 'starter');
+  const picks: string[] = [];
+  while (picks.length < choices && pool.length > 0) {
+    const card = rng.pickWeighted(pool, (c) => (c.rarity === 'starter' ? 0 : weights[c.rarity]));
+    picks.push(card.id);
+    pool = pool.filter((c) => c.id !== card.id);
+  }
+  return picks;
 }
 
 export function lossCause(s: GameState): LossCause | null {
@@ -288,6 +342,7 @@ export function cloneState(s: GameState): GameState {
     drawPile: s.drawPile.slice(),
     hand: s.hand.slice(),
     discard: s.discard.slice(),
+    rewardOptions: s.rewardOptions.slice(),
     lost: s.lost.slice(),
     burnout: { ...s.burnout },
     log: s.log.slice(),
