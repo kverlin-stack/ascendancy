@@ -1,0 +1,31 @@
+{
+  "name": "ascendancy",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.23.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm --filter @ascendancy/content validate",
+    "sim": "pnpm --filter @ascendancy/sim --silent sim",
+    "dev": "pnpm --filter @ascendancy/web dev",
+    "build:web": "pnpm --filter @ascendancy/web build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.11",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^5.1.2"
+  }
+}
