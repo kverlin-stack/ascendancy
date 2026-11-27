@@ -10,7 +10,7 @@ In **Act I: The War**, your nation is losing a decisive global war. You build a 
 
 In **Act II: The Ascent** (paid unlock), the unified world turns to the stars. You run the space program: reach orbit, find a habitable world nearby and plant a permanent colony there. That landing is the game's true ending.
 
-The setting is fictional: an alternate mid-century world with invented nations, people and technology, styled after the 1940s to 1960s. It takes the proven Slay the Spire / Balatro loop and wraps it in a story whose stakes climb from survival to the stars.
+The setting is fictional: an invented world with its own nations, people and technology, drawn from our own ideas and public-domain scientific romance (see `docs/WORLD.md`). Its look moves with the story: Act I's war feels early-to-mid 20th century, and Act II jumps ahead to a 1960s-style space age. It takes the proven Slay the Spire / Balatro loop and wraps it in a story whose stakes climb from survival to the stars.
 
 - **Platform:** iOS and Android, portrait, one-handed play. A web build is used for playtesting.
 - **Session length:** a run takes 20–40 minutes and can be paused at any point.

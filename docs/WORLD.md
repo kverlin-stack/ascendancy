@@ -4,7 +4,16 @@ The setting, tone and naming for the game. Read this before writing any card nam
 
 ## The premise in one paragraph
 
-In an alternate early 20th century, a breakthrough in atomic science arrives decades early. The Concord, a battered alliance of free nations, is losing a world war to the Iron Directorate. The Concord's last hope is Project Sunfire, a secret program to harness the new science before the Directorate's armies reach the capital. The weapon ends the war, and its horror convinces the survivors to set down their borders. The nations meet and found the World Assembly, the first government of all humankind. With war behind them, the unified world turns its science outward: first to orbit, then to a habitable world circling a nearby star, and finally to the first human colony beyond Earth.
+In a world much like our early 20th century, a breakthrough in atomic science arrives decades early. The Concord, a battered alliance of free nations, is losing a world war to the Iron Directorate. The Concord's last hope is Project Sunfire, a secret program to harness the new science before the Directorate's armies reach the capital. The weapon ends the war, and its horror convinces the survivors to set down their borders. The nations meet and found the World Assembly, the first government of all humankind. With war behind them, the unified world turns its science outward: first to orbit, then to a habitable world circling a nearby star, and finally to the first human colony beyond Earth.
+
+## Era
+
+The world is our own invention, not an alternate version of real history, so it has no real dates. Its look and technology move with the story:
+
+- **Act I: the war.** Early-to-mid 20th century in feel: telegrams, slide rules, wartime posters, radio broadcasts.
+- **Act II: the Ascent.** Picks up years after the Accord, in a 1960s-style space age: chrome, rockets, mission control, optimism.
+
+The jump between the acts is deliberate. It's part of what makes Act II feel like a new game.
 
 ## Inspirations (public domain)
 

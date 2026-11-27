@@ -12,7 +12,7 @@ A single-player roguelike deckbuilder for phones, told in two acts. The full des
 - **Act II clock:** launch windows (stage bosses). Missing one drains Public Will. **Lose:** Public Will or Budget hits 0, or the final window closes.
 - **Signature mechanics:** Burnout (overused scientists are lost for the run), the Front, and crew Risk in Act II.
 - **Legacy:** winning Act I carries 3 cards, 1 Facility and veteran scientists into Act II.
-- **Setting:** fictional alternate mid-century world. No real people, nations or science. The superweapon stays abstract, with no on-screen casualties.
+- **Setting:** an invented world, not our history, drawn from our own ideas plus public-domain scientific romance. Its look moves with the story: Act I's war feels early-to-mid 20th century; Act II jumps ahead to a 1960s-style space age. No real people, nations or science. The superweapon stays abstract, with no on-screen casualties.
   - `docs/WORLD.md` (the world bible) is the source for all names, flavor text and UI copy. Names live in `packages/content/src/names.ts`; never hard-code them.
 
 ## Design pillars (the tiebreakers)
