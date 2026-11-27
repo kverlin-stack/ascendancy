@@ -23,6 +23,12 @@ export const S = {
   rewardTitle: (q: number) => `Q${q} report`,
   rewardHint: 'Recruit one card into your deck, or skip.',
   skip: 'Skip',
+  burnoutLabel: (used: number, limit: number) => `Burnout ${used}/${limit}`,
+  burnoutFresh: 'Each play adds 1. At the limit they leave for good.',
+  burnoutResting: 'Skip playing them this turn and they rest (−1).',
+  burnoutLast: 'Next play is their last: they leave the program for good (−2 Morale).',
+  burnoutReward: (limit: number) =>
+    `Burnout ${limit}: each play adds 1, resting in hand removes 1, and at ${limit} they leave for the rest of the run.`,
   wonTitle: `${NAMES.programShort} is complete`,
   wonText: (turn: number, front: number) =>
     `The war ends on turn ${turn}, with ${front} territories still held. ${cap(NAMES.alliance)} will meet at ${NAMES.accord}.`,
@@ -53,7 +59,7 @@ export const STAT_INFO: Record<StatKey, string> = {
   budget:
     'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
   morale:
-    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 2 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
+    'How hard your people can keep going. At 8+ you draw 1 extra card each turn; at 3 or less you get 1 less Effort. War weariness costs 2 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
 };
 
 const LOSS_TEXT: Record<LossCause, string> = {

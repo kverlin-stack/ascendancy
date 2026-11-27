@@ -180,7 +180,9 @@ export function App() {
 
       <ol className="log">
         {state.log.slice(-4).map((line, i) => (
-          <li key={state.log.length - 4 + i}>{line}</li>
+          <li key={state.log.length - 4 + i} className={line.includes('burned out') ? 'warn' : ''}>
+            {line}
+          </li>
         ))}
       </ol>
 
@@ -213,7 +215,8 @@ export function App() {
                     {card.flavorText && <span className="flavor">{card.flavorText}</span>}
                     {card.scientist && (
                       <span className="role muted">
-                        {card.scientist.role} Burnout {burnoutLimitOf(state, content, card)}.
+                        {card.scientist.role}{' '}
+                        {S.burnoutReward(burnoutLimitOf(state, content, card))}
                       </span>
                     )}
                   </button>
@@ -257,14 +260,17 @@ function countBy(ids: string[]): [string, number][] {
 
 /** Burnout meter: filled pips are used up; the last pip is the burnout play. */
 function Burnout({ used, limit }: { used: number; limit: number }) {
-  const left = limit - used;
+  const last = used === limit - 1;
   return (
-    <span className="burnout" title="Burnout">
-      {Array.from({ length: limit }, (_, i) => (
-        <span key={i} className={i < used ? 'bpip used' : 'bpip'} />
-      ))}
-      <span className={left === 1 ? 'warn' : 'muted'}>
-        {left === 1 ? 'Burns out if played' : `${left} plays left`}
+    <span className="burnout">
+      <span className="burnout-row">
+        <span className={last ? 'warn' : 'muted'}>{S.burnoutLabel(used, limit)}</span>
+        {Array.from({ length: limit }, (_, i) => (
+          <span key={i} className={i < used ? 'bpip used' : 'bpip'} />
+        ))}
+      </span>
+      <span className={last ? 'warn' : 'muted'}>
+        {last ? S.burnoutLast : used > 0 ? S.burnoutResting : S.burnoutFresh}
       </span>
     </span>
   );

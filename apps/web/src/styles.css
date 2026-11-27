@@ -310,10 +310,22 @@ button {
 
 .burnout {
   display: flex;
-  align-items: center;
-  gap: 3px;
+  flex-direction: column;
+  gap: 2px;
   font-size: 11px;
   margin-top: auto;
+  padding-top: 4px;
+  border-top: 1px dashed #4a453c;
+}
+
+.burnout-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.log .warn {
+  color: var(--accent);
 }
 
 .bpip {
@@ -328,9 +340,9 @@ button {
   border-color: var(--accent);
 }
 
-.burnout .muted,
-.burnout .warn {
-  margin-left: 4px;
+.burnout-row > span:first-child {
+  margin-right: 4px;
+  font-weight: 700;
 }
 
 .burnout .warn {
