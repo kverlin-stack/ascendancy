@@ -11,7 +11,7 @@ describe('content', () => {
 
   it('every card type is represented', () => {
     const types = new Set(content.cards.map((c) => c.type));
-    expect([...types].sort()).toEqual(['people', 'research', 'security', 'warEffort']);
+    expect([...types].sort()).toEqual(['people', 'research', 'security', 'status', 'warEffort']);
   });
 
   it('rejects unknown effect primitives', () => {

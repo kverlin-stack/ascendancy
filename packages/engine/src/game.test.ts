@@ -147,7 +147,8 @@ describe('endTurn', () => {
           id: 'raid',
           name: 'Raid',
           text: '',
-          weight: 1,
+          copies: 1,
+          fromQuarter: 1,
           effects: [
             { type: 'advanceFront', amount: 2 },
             { type: 'loseSecrecy', amount: 1 },
@@ -188,7 +189,14 @@ describe('endTurn', () => {
   ] as const)('loses when %s hits 0', (resource, effect) => {
     const c = testContent({
       threats: [
-        { id: 't', name: 'T', text: '', weight: 1, effects: [{ type: effect, amount: 99 }] },
+        {
+          id: 't',
+          name: 'T',
+          text: '',
+          copies: 1,
+          fromQuarter: 1,
+          effects: [{ type: effect, amount: 99 }],
+        },
       ],
     });
     const s1 = applyAction(newGame(c, 1), { type: 'endTurn' }, c);
@@ -206,7 +214,8 @@ describe('fortify', () => {
           id: 'raid',
           name: 'Raid',
           text: '',
-          weight: 1,
+          copies: 1,
+          fromQuarter: 1,
           effects: [{ type: 'advanceFront', amount }],
         },
       ],
@@ -358,6 +367,94 @@ describe('exhaust', () => {
     expect(s1.resources.progress).toBe(5);
     expect(s1.lost.map((c) => c.uid)).toEqual([1000]);
     expect(s1.discard.some((c) => c.uid === 1000)).toBe(false);
+  });
+});
+
+describe('enemy deck', () => {
+  const t = (id: string, copies: number, fromQuarter: number) => ({
+    id,
+    name: id,
+    text: '',
+    copies,
+    fromQuarter,
+    effects: [] as never[],
+  });
+
+  it('draws every copy once before reshuffling, so the enemy can be counted', () => {
+    const c = testContent({ threats: [t('a', 2, 1), t('b', 1, 1)] });
+    let s = newGame(c, 5);
+    const seen: string[] = [s.threatId];
+    for (let i = 0; i < 2; i++) {
+      s = skipReward(applyAction(s, { type: 'endTurn' }, c), c);
+      seen.push(s.threatId);
+    }
+    expect(seen.sort()).toEqual(['a', 'a', 'b']);
+  });
+
+  it('later actions join the deck when their quarter starts', () => {
+    const c = testContent({ threats: [t('early', 1, 1), t('late', 1, 2)] });
+    let s = newGame(c, 1);
+    const seen: string[] = [s.threatId];
+    for (let i = 0; i < 5; i++) {
+      s = skipReward(applyAction(s, { type: 'endTurn' }, c), c);
+      seen.push(s.threatId);
+    }
+    expect(seen.slice(0, 3)).toEqual(['early', 'early', 'early']);
+    expect(seen.slice(3)).toContain('late');
+  });
+
+  it('loseProgress (Sabotage) sets Progress back', () => {
+    const c = testContent({
+      threats: [{ ...t('sab', 1, 1), effects: [{ type: 'loseProgress', amount: 3 }] }],
+    });
+    const s0 = newGame(c, 1);
+    s0.resources.progress = 5;
+    expect(applyAction(s0, { type: 'endTurn' }, c).resources.progress).toBe(2);
+  });
+});
+
+describe('the Mole', () => {
+  const infiltrator = testContent({
+    threats: [
+      {
+        id: 'inf',
+        name: 'Inf',
+        text: '',
+        copies: 1,
+        fromQuarter: 1,
+        effects: [{ type: 'addCard', cardId: 'mole', amount: 1 }],
+      },
+    ],
+  });
+
+  it('Infiltrator adds a Mole to your deck', () => {
+    const s0 = newGame(infiltrator, 1);
+    const total = cardCount(s0);
+    const s1 = applyAction(s0, { type: 'endTurn' }, infiltrator);
+    expect(cardCount(s1)).toBe(total + 1);
+    expect(
+      [...s1.drawPile, ...s1.hand, ...s1.discard].filter((c) => c.cardId === 'mole'),
+    ).toHaveLength(1);
+  });
+
+  it('costs Secrecy if still in hand at end of turn', () => {
+    const s0 = withHand(newGame(content, 1), ['mole']);
+    expect(applyAction(s0, { type: 'endTurn' }, content).resources.secrecy).toBe(4);
+  });
+
+  it('playing it spends Effort and roots it out for good', () => {
+    const s0 = withHand(newGame(content, 1), ['mole']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.effort).toBe(2);
+    expect(s1.lost.map((c) => c.uid)).toEqual([1000]);
+    expect(applyAction(s1, { type: 'endTurn' }, content).resources.secrecy).toBe(5);
+  });
+
+  it('is never offered as a pick', () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const s = applyAction({ ...newGame(content, seed), turn: 3 }, { type: 'endTurn' }, content);
+      expect(s.rewardOptions).not.toContain('mole');
+    }
   });
 });
 

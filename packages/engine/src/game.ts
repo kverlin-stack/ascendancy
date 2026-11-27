@@ -1,4 +1,4 @@
-import { advanceFor, isQuarterEnd, yearOf } from './calendar';
+import { advanceFor, isQuarterEnd, runQuarterOf, yearOf } from './calendar';
 import { createRng, seedToState, type Rng } from './rng';
 import { STATE_VERSION } from './types';
 import type {
@@ -62,12 +62,14 @@ export function newGame(content: GameContent, seed: number | string): GameState 
     lost: [],
     burnout: {},
     threatId: '',
+    enemyDeck: [],
     nextUid: deck.length + 1,
     log: [],
   };
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, rules.handSize, rng);
-  s.threatId = pickThreat(content, rng).id;
+  s.enemyDeck = rng.shuffle(eligibleThreats(content, 1));
+  s.threatId = drawThreat(s, content, rng);
   s.rngState = rng.state;
   return s;
 }
@@ -102,6 +104,7 @@ export function canPlay(state: GameState, uid: number, content: GameContent): bo
   if (!inst) return false;
   const card = getCard(content, inst.cardId);
   if (card.cost > state.effort) return false;
+  if (card.type === 'status' && card.effects.length === 0 && !card.exhaust) return false;
   let budget = 0;
   let morale = 0;
   let secrecy = 0;
@@ -162,7 +165,7 @@ function endTurn(state: GameState, content: GameContent): GameState {
 
   // 1. The telegraphed enemy action resolves.
   const threat = getThreat(content, s.threatId);
-  for (const effect of threat.effects) applyThreatEffect(s, effect);
+  for (const effect of threat.effects) applyThreatEffect(s, effect, content, rng);
   s.log.push(`T${s.turn}: enemy ${threat.name}`);
 
   // 2. Quarterly enemy advance and war weariness.
@@ -175,7 +178,15 @@ function endTurn(state: GameState, content: GameContent): GameState {
     );
   }
 
-  // 3. Lose checks.
+  // 3. Curses still in hand (e.g. a Mole) take effect.
+  for (const inst of s.hand) {
+    const card = getCard(content, inst.cardId);
+    if (!card.inHandAtEndOfTurn) continue;
+    for (const effect of card.inHandAtEndOfTurn) applyThreatEffect(s, effect, content, rng);
+    s.log.push(`T${s.turn}: ${card.name} in hand`);
+  }
+
+  // 4. Lose checks.
   const cause = lossCause(s);
   if (cause) {
     s.phase = 'lost';
@@ -187,13 +198,13 @@ function endTurn(state: GameState, content: GameContent): GameState {
     return s;
   }
 
-  // 4. Fortify expires. Scientists left unplayed in hand rest, then discard.
+  // 5. Fortify expires. Scientists left unplayed in hand rest, then discard.
   s.fortify = 0;
   for (const inst of s.hand) rest(s, inst.uid, 1);
   s.discard.push(...s.hand);
   s.hand = [];
 
-  // 5. After a quarter, offer a card pick before the next turn starts.
+  // 6. After a quarter, offer a card pick before the next turn starts.
   if (isQuarterEnd(s.turn, rules)) {
     s.rewardOptions = pickRewardOptions(content, rng);
     if (s.rewardOptions.length > 0) {
@@ -211,7 +222,33 @@ function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
   s.turn += 1;
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, content.rules.handSize, rng);
-  s.threatId = pickThreat(content, rng).id;
+  // A new quarter shuffles newly unlocked enemy actions into the rest of the enemy deck.
+  const rules = content.rules;
+  if ((s.turn - 1) % rules.turnsPerQuarter === 0) {
+    const q = runQuarterOf(s.turn, rules);
+    const added = content.threats.filter((t) => t.fromQuarter === q).flatMap((t) => copiesOf(t));
+    if (added.length > 0) s.enemyDeck = rng.shuffle([...s.enemyDeck, ...added]);
+  }
+  s.threatId = drawThreat(s, content, rng);
+}
+
+function copiesOf(t: ThreatDef): string[] {
+  return Array.from({ length: t.copies }, () => t.id);
+}
+
+/** Every copy of every enemy action unlocked by this run quarter. */
+function eligibleThreats(content: GameContent, runQuarter: number): string[] {
+  return content.threats.filter((t) => t.fromQuarter <= runQuarter).flatMap(copiesOf);
+}
+
+/** Draw the next enemy action, reshuffling the full unlocked enemy deck when it runs out. */
+function drawThreat(s: GameState, content: GameContent, rng: Rng): string {
+  if (s.enemyDeck.length === 0) {
+    s.enemyDeck = rng.shuffle(eligibleThreats(content, runQuarterOf(s.turn, content.rules)));
+  }
+  const next = s.enemyDeck.pop();
+  if (next === undefined) throw new Error('No enemy actions available');
+  return next;
 }
 
 function chooseReward(state: GameState, cardId: string | null, content: GameContent): GameState {
@@ -232,10 +269,12 @@ function chooseReward(state: GameState, cardId: string | null, content: GameCont
 /** Distinct non-starter cards, weighted by rarity. */
 export function pickRewardOptions(content: GameContent, rng: Rng): string[] {
   const { weights, choices } = content.rules.reward;
-  let pool = content.cards.filter((c) => c.rarity !== 'starter');
+  let pool = content.cards.filter((c) => c.rarity !== 'starter' && c.rarity !== 'special');
   const picks: string[] = [];
   while (picks.length < choices && pool.length > 0) {
-    const card = rng.pickWeighted(pool, (c) => (c.rarity === 'starter' ? 0 : weights[c.rarity]));
+    const card = rng.pickWeighted(pool, (c) =>
+      c.rarity === 'starter' || c.rarity === 'special' ? 0 : weights[c.rarity],
+    );
     picks.push(card.id);
     pool = pool.filter((c) => c.id !== card.id);
   }
@@ -282,9 +321,18 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
   }
 }
 
-function applyThreatEffect(s: GameState, e: ThreatEffect): void {
+function applyThreatEffect(s: GameState, e: ThreatEffect, content: GameContent, rng: Rng): void {
   const r = s.resources;
   switch (e.type) {
+    case 'loseProgress':
+      r.progress = Math.max(0, r.progress - e.amount);
+      return;
+    case 'addCard': {
+      getCard(content, e.cardId); // fail loudly on bad data
+      for (let i = 0; i < e.amount; i++) s.discard.push({ uid: s.nextUid++, cardId: e.cardId });
+      s.discard = rng.shuffle(s.discard);
+      return;
+    }
     case 'advanceFront':
       loseFront(s, e.amount);
       return;
@@ -327,10 +375,6 @@ function drawCards(s: GameState, n: number, rng: Rng): void {
   }
 }
 
-function pickThreat(content: GameContent, rng: Rng): ThreatDef {
-  return rng.pickWeighted(content.threats, (t) => t.weight);
-}
-
 /**
  * Copy a GameState for the reducer to modify. Card instances are never
  * mutated, only moved between piles, so copying the arrays is enough.
@@ -343,6 +387,7 @@ export function cloneState(s: GameState): GameState {
     hand: s.hand.slice(),
     discard: s.discard.slice(),
     rewardOptions: s.rewardOptions.slice(),
+    enemyDeck: s.enemyDeck.slice(),
     lost: s.lost.slice(),
     burnout: { ...s.burnout },
     log: s.log.slice(),

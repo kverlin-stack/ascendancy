@@ -25,3 +25,8 @@ export function isQuarterEnd(turn: number, rules: Rules): boolean {
 export function turnsUntilAdvance(state: GameState, rules: Rules): number {
   return rules.turnsPerQuarter - ((state.turn - 1) % rules.turnsPerQuarter);
 }
+
+/** 1-based quarter counted from the start of the run (Year 2 Q1 = 5). */
+export function runQuarterOf(turn: number, rules: Rules): number {
+  return Math.floor((turn - 1) / rules.turnsPerQuarter) + 1;
+}

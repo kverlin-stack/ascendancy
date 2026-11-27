@@ -36,11 +36,19 @@ export function evaluate(state: GameState, content: GameContent): number {
   const { rules } = content;
   const r = { ...state.resources };
   let frontLoss = 0;
-  for (const e of getThreat(content, state.threatId).effects) {
+  // The telegraphed action, plus any curses (Moles) still in hand, hit at end of turn.
+  const incoming = [
+    ...getThreat(content, state.threatId).effects,
+    ...state.hand.flatMap((c) => getCard(content, c.cardId).inHandAtEndOfTurn ?? []),
+  ];
+  for (const e of incoming) {
     if (e.type === 'advanceFront') frontLoss += e.amount;
     if (e.type === 'loseSecrecy') r.secrecy -= e.amount;
     if (e.type === 'loseBudget') r.budget -= e.amount;
     if (e.type === 'loseMorale') r.morale -= e.amount;
+    if (e.type === 'loseProgress') r.progress = Math.max(0, r.progress - e.amount);
+    // A Mole in the deck will keep costing Secrecy.
+    if (e.type === 'addCard') r.secrecy -= e.amount;
   }
   if (isQuarterEnd(state.turn, rules)) {
     frontLoss += advanceFor(yearOf(state.turn, rules), rules);
@@ -49,7 +57,10 @@ export function evaluate(state: GameState, content: GameContent): number {
   r.front -= Math.max(0, frontLoss - state.fortify);
 
   const reserve = reserves(content);
-  let score = r.progress * 1.0;
+  const curses = [...state.drawPile, ...state.hand, ...state.discard].filter(
+    (c) => getCard(content, c.cardId).inHandAtEndOfTurn,
+  ).length;
+  let score = r.progress * 1.0 - CURSE_VALUE * curses;
   for (const key of ['front', 'secrecy', 'budget', 'morale'] as const) {
     const v = r[key];
     if (v <= 0) return -1e4 + score;
@@ -121,6 +132,9 @@ const EFFECT_VALUE: Record<CardDef['effects'][number]['type'], number> = {
   drawCards: 1.3,
   restScientists: 1,
 };
+
+/** Each curse in the deck counts as this much lost score, so rooting one out is worth Effort. */
+export const CURSE_VALUE = 2;
 
 /** Static card score for picks: value per Effort, weighted toward whatever resource is lowest. */
 export function cardValue(card: CardDef, state: GameState, content: GameContent): number {

@@ -27,32 +27,44 @@ export const ThreatEffectSchema = z.discriminatedUnion('type', [
   effect('loseSecrecy', positive),
   effect('loseBudget', positive),
   effect('loseMorale', positive),
+  effect('loseProgress', positive),
+  z.object({ type: z.literal('addCard'), cardId: id, amount: positive }).strict(),
 ]);
 
 export const CardSchema: z.ZodType<CardDef> = z
   .object({
     id,
     name: z.string().min(1),
-    type: z.enum(['research', 'warEffort', 'security', 'people']),
-    rarity: z.enum(['starter', 'common', 'uncommon', 'rare']),
+    type: z.enum(['research', 'warEffort', 'security', 'people', 'status']),
+    rarity: z.enum(['starter', 'special', 'common', 'uncommon', 'rare']),
     cost: z.number().int().min(0).max(5),
     text: z.string().min(1),
-    effects: z.array(CardEffectSchema).min(1),
+    effects: z.array(CardEffectSchema),
     exhaust: z.boolean().optional(),
+    inHandAtEndOfTurn: z.array(ThreatEffectSchema).min(1).optional(),
     scientist: z
       .object({ burnoutLimit: z.number().int().min(1).max(9), role: z.string().min(1) })
       .strict()
       .optional(),
   })
   .strict()
-  .refine((c) => !c.scientist || c.type === 'people', 'scientists must be People cards');
+  .refine((c) => !c.scientist || c.type === 'people', 'scientists must be People cards')
+  .refine(
+    (c) => c.effects.length > 0 || c.exhaust || c.type === 'status',
+    'cards need at least one effect',
+  )
+  .refine(
+    (c) => c.type !== 'status' || c.rarity === 'special',
+    'status cards must be rarity "special"',
+  );
 
 export const ThreatSchema: z.ZodType<ThreatDef> = z
   .object({
     id,
     name: z.string().min(1),
     text: z.string().min(1),
-    weight: z.number().positive(),
+    copies: z.number().int().min(1).max(9),
+    fromQuarter: z.number().int().min(1),
     effects: z.array(ThreatEffectSchema).min(1),
   })
   .strict();

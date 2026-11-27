@@ -49,6 +49,21 @@ export function validateContent(raw: RawContent): GameContent {
       if (!known.has(cardId)) problems.push(`starterDeck: unknown card "${cardId}"`);
     }
   }
+  if (cards && threats) {
+    const known = new Set(cards.map((c) => c.id));
+    const refs = [
+      ...threats.flatMap((t) => t.effects.map((e) => ({ where: `threat "${t.id}"`, e }))),
+      ...cards.flatMap((c) =>
+        (c.inHandAtEndOfTurn ?? []).map((e) => ({ where: `card "${c.id}"`, e })),
+      ),
+    ];
+    for (const { where, e } of refs) {
+      if (e.type === 'addCard' && !known.has(e.cardId))
+        problems.push(`${where}: addCard of unknown card "${e.cardId}"`);
+    }
+    if (!threats.some((t) => t.fromQuarter === 1))
+      problems.push('threats: at least one must start in quarter 1');
+  }
   if (rules && starterDeck && starterDeck.length < rules.handSize) {
     problems.push(`starterDeck: needs at least ${rules.handSize} cards (hand size)`);
   }

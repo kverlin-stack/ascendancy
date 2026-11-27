@@ -3,24 +3,117 @@
     "id": "armored-offensive",
     "name": "Armored Offensive",
     "text": "Front advances 2. -1 Morale.",
-    "weight": 3,
+    "copies": 3,
+    "fromQuarter": 1,
     "effects": [
-      { "type": "advanceFront", "amount": 2 },
-      { "type": "loseMorale", "amount": 1 }
+      {
+        "type": "advanceFront",
+        "amount": 2
+      },
+      {
+        "type": "loseMorale",
+        "amount": 1
+      }
     ]
   },
   {
     "id": "spy-ring",
     "name": "Spy Ring",
     "text": "-2 Secrecy.",
-    "weight": 2,
-    "effects": [{ "type": "loseSecrecy", "amount": 2 }]
+    "copies": 2,
+    "fromQuarter": 1,
+    "effects": [
+      {
+        "type": "loseSecrecy",
+        "amount": 2
+      }
+    ]
   },
   {
     "id": "naval-blockade",
     "name": "Naval Blockade",
     "text": "-2 Budget.",
-    "weight": 2,
-    "effects": [{ "type": "loseBudget", "amount": 2 }]
+    "copies": 2,
+    "fromQuarter": 1,
+    "effects": [
+      {
+        "type": "loseBudget",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "propaganda-broadcast",
+    "name": "Propaganda Broadcast",
+    "text": "-2 Morale.",
+    "copies": 1,
+    "fromQuarter": 1,
+    "effects": [
+      {
+        "type": "loseMorale",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "sabotage",
+    "name": "Sabotage",
+    "text": "-4 Progress.",
+    "copies": 1,
+    "fromQuarter": 2,
+    "effects": [
+      {
+        "type": "loseProgress",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "infiltrator",
+    "name": "Infiltrator",
+    "text": "A Mole is slipped into your deck.",
+    "copies": 1,
+    "fromQuarter": 2,
+    "effects": [
+      {
+        "type": "addCard",
+        "cardId": "mole",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "air-raid",
+    "name": "Air Raid",
+    "text": "Front advances 1. -2 Budget. -1 Morale.",
+    "copies": 1,
+    "fromQuarter": 3,
+    "effects": [
+      {
+        "type": "advanceFront",
+        "amount": 1
+      },
+      {
+        "type": "loseBudget",
+        "amount": 2
+      },
+      {
+        "type": "loseMorale",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "blitz",
+    "name": "Blitz",
+    "text": "Front advances 3.",
+    "copies": 1,
+    "fromQuarter": 3,
+    "effects": [
+      {
+        "type": "advanceFront",
+        "amount": 3
+      }
+    ]
   }
 ]

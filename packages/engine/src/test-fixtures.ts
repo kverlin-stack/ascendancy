@@ -20,6 +20,17 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
     },
     cards: [
       {
+        id: 'mole',
+        name: 'Mole',
+        type: 'status',
+        rarity: 'special',
+        cost: 1,
+        text: '',
+        effects: [],
+        exhaust: true,
+        inHandAtEndOfTurn: [{ type: 'loseSecrecy', amount: 1 }],
+      },
+      {
         id: 'c1',
         name: 'C1',
         type: 'research',
@@ -154,7 +165,7 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
         effects: [{ type: 'gainBudget', amount: 3 }],
       },
     ],
-    threats: [{ id: 'quiet', name: 'Quiet', text: '', weight: 1, effects: [] }],
+    threats: [{ id: 'quiet', name: 'Quiet', text: '', copies: 1, fromQuarter: 1, effects: [] }],
     starterDeck: ['lab', 'lab', 'lab', 'big', 'hold', 'hold', 'cover', 'rally', 'draw', 'bonds'],
     ...overrides,
   };

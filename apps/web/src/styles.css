@@ -210,6 +210,10 @@ button {
 .card.people {
   border-top-color: var(--people);
 }
+.card.status {
+  border-top-color: #222;
+  background: repeating-linear-gradient(45deg, #2a2722, #2a2722 8px, #332f29 8px, #332f29 16px);
+}
 
 .card:disabled {
   opacity: 0.4;
@@ -356,4 +360,20 @@ button {
 .skip {
   width: 100%;
   padding: 10px;
+}
+
+.enemy-deck {
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: underline dotted;
+}
+
+.enemy-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
 }

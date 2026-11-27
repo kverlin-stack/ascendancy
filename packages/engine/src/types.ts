@@ -3,10 +3,13 @@
  * zod schemas that must produce exactly these shapes.
  */
 
-export type CardType = 'research' | 'warEffort' | 'security' | 'people';
+export type CardType = 'research' | 'warEffort' | 'security' | 'people' | 'status';
 
-/** 'starter' cards only come from the starting deck; the rest can be offered as picks. */
-export type Rarity = 'starter' | 'common' | 'uncommon' | 'rare';
+/**
+ * 'starter' cards only come from the starting deck and 'special' ones from
+ * game effects (e.g. the Mole); the rest can be offered as picks.
+ */
+export type Rarity = 'starter' | 'special' | 'common' | 'uncommon' | 'rare';
 
 /** Effect primitives a card can use. Negative amounts spend the resource. */
 export type CardEffect =
@@ -26,7 +29,10 @@ export type ThreatEffect =
   | { type: 'advanceFront'; amount: number }
   | { type: 'loseSecrecy'; amount: number }
   | { type: 'loseBudget'; amount: number }
-  | { type: 'loseMorale'; amount: number };
+  | { type: 'loseMorale'; amount: number }
+  | { type: 'loseProgress'; amount: number }
+  /** Shuffle copies of a card (e.g. the Mole) into the player's discard pile. */
+  | { type: 'addCard'; cardId: string; amount: number };
 
 export interface ScientistTraits {
   /** Plays before this scientist burns out and is lost for the run. */
@@ -45,6 +51,8 @@ export interface CardDef {
   effects: CardEffect[];
   /** Removed for the run after it's played. */
   exhaust?: boolean | undefined;
+  /** Applied if the card is still in hand when the turn ends (curses like the Mole). */
+  inHandAtEndOfTurn?: ThreatEffect[] | undefined;
   /** Present on scientist cards (People cards with a Burnout meter). */
   scientist?: ScientistTraits | undefined;
 }
@@ -53,8 +61,10 @@ export interface ThreatDef {
   id: string;
   name: string;
   text: string;
-  /** Relative chance of being chosen as the next enemy action. */
-  weight: number;
+  /** Copies of this action in the enemy deck. */
+  copies: number;
+  /** Quarter of the run (1 = first quarter) from which it joins the enemy deck. */
+  fromQuarter: number;
   effects: ThreatEffect[];
 }
 
@@ -107,7 +117,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 export interface GameState {
   version: number;
@@ -134,6 +144,8 @@ export interface GameState {
   burnout: Record<string, number>;
   /** The telegraphed enemy action that resolves when this turn ends. */
   threatId: string;
+  /** Enemy actions still to come before the enemy deck reshuffles. */
+  enemyDeck: string[];
   nextUid: number;
   log: string[];
 }

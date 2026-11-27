@@ -565,5 +565,21 @@
       "burnoutLimit": 4,
       "role": "Staff physician. Keeps everyone else standing."
     }
+  },
+  {
+    "id": "mole",
+    "name": "Mole",
+    "type": "status",
+    "rarity": "special",
+    "cost": 1,
+    "text": "While in hand at end of turn: -1 Secrecy. Play to root it out (Exhaust).",
+    "effects": [],
+    "exhaust": true,
+    "inHandAtEndOfTurn": [
+      {
+        "type": "loseSecrecy",
+        "amount": 1
+      }
+    ]
   }
 ]

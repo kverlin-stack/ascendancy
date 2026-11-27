@@ -22,6 +22,7 @@ const TYPE_LABEL: Record<CardType, string> = {
   warEffort: 'War Effort',
   security: 'Security',
   people: 'People',
+  status: 'Status',
 };
 
 type StatKey = 'secrecy' | 'budget' | 'morale';
@@ -51,6 +52,7 @@ function randomSeed(): number {
 export function App() {
   const [state, setState] = useState<GameState>(() => loadRun() ?? newGame(content, randomSeed()));
   const [info, setInfo] = useState<StatKey | null>(null);
+  const [showEnemyDeck, setShowEnemyDeck] = useState(false);
   const toggleInfo = (key: StatKey) => setInfo((cur) => (cur === key ? null : key));
 
   useEffect(() => saveRun(state), [state]);
@@ -144,6 +146,20 @@ export function App() {
         <div>
           <strong>{threat.name}</strong>: {threat.text}
         </div>
+        <button className="enemy-deck" onClick={() => setShowEnemyDeck((v) => !v)}>
+          Enemy deck: {state.enemyDeck.length} left {showEnemyDeck ? '▴' : '▾'}
+        </button>
+        {showEnemyDeck && (
+          <ul className="enemy-list">
+            {countBy(state.enemyDeck).map(([id, n]) => (
+              <li key={id}>
+                {n}× {getThreat(content, id).name}:{' '}
+                <span className="muted">{getThreat(content, id).text}</span>
+              </li>
+            ))}
+            {state.enemyDeck.length === 0 && <li className="muted">Reshuffles next turn.</li>}
+          </ul>
+        )}
       </section>
 
       <section className="effort" aria-label="Effort">
@@ -251,6 +267,12 @@ export function App() {
       )}
     </main>
   );
+}
+
+function countBy(ids: string[]): [string, number][] {
+  const m = new Map<string, number>();
+  for (const id of ids) m.set(id, (m.get(id) ?? 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
 }
 
 /** Burnout meter: filled pips are used up; the last pip is the burnout play. */
