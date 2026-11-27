@@ -297,3 +297,9 @@ button {
   width: 100%;
   text-align: center;
 }
+
+.fortify {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--held);
+}

@@ -33,7 +33,7 @@ const STAT_INFO: Record<StatKey, string> = {
   budget:
     'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
   morale:
-    'How hard your people can keep going. Offensives and overtime wear it down; rallies lift it. At 0 the staff walk out and you lose.',
+    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 1 every quarter, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
 };
 
 const LOSS_TEXT: Record<string, string> = {
@@ -123,6 +123,11 @@ export function App() {
             −{nextAdvance} in {untilAdvance} turn{untilAdvance === 1 ? '' : 's'}
           </span>
         </div>
+        {state.fortify > 0 && (
+          <div className="fortify">
+            🛡 Fortified: blocks the next {state.fortify} Front lost this turn
+          </div>
+        )}
         <div className="territories">
           {Array.from({ length: rules.frontTerritories }, (_, i) => {
             const held = i >= rules.frontTerritories - r.front;
@@ -143,7 +148,7 @@ export function App() {
 
       <section className="effort" aria-label="Effort">
         Effort{' '}
-        {Array.from({ length: rules.effortPerTurn }, (_, i) => (
+        {Array.from({ length: state.maxEffort }, (_, i) => (
           <span key={i} className={i < state.effort ? 'pip on' : 'pip'} />
         ))}
         <span className="muted">

@@ -5,7 +5,12 @@
     "type": "research",
     "cost": 1,
     "text": "+2 Progress.",
-    "effects": [{ "type": "addProgress", "amount": 2 }]
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 2
+      }
+    ]
   },
   {
     "id": "night-shift",
@@ -14,8 +19,14 @@
     "cost": 1,
     "text": "+3 Progress. -1 Morale.",
     "effects": [
-      { "type": "addProgress", "amount": 3 },
-      { "type": "gainMorale", "amount": -1 }
+      {
+        "type": "addProgress",
+        "amount": 3
+      },
+      {
+        "type": "gainMorale",
+        "amount": -1
+      }
     ]
   },
   {
@@ -25,17 +36,45 @@
     "cost": 2,
     "text": "+5 Progress. -2 Budget.",
     "effects": [
-      { "type": "addProgress", "amount": 5 },
-      { "type": "gainBudget", "amount": -2 }
+      {
+        "type": "addProgress",
+        "amount": 5
+      },
+      {
+        "type": "gainBudget",
+        "amount": -2
+      }
     ]
   },
   {
-    "id": "hold-the-line",
-    "name": "Hold the Line",
+    "id": "open-air-test",
+    "name": "Open-Air Test",
+    "type": "research",
+    "cost": 1,
+    "text": "+4 Progress. -2 Secrecy.",
+    "effects": [
+      {
+        "type": "addProgress",
+        "amount": 4
+      },
+      {
+        "type": "protectSecrecy",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "dig-in",
+    "name": "Dig In",
     "type": "warEffort",
     "cost": 1,
-    "text": "Push the Front back 1.",
-    "effects": [{ "type": "pushFront", "amount": 1 }]
+    "text": "Fortify 2: block the next 2 Front lost this turn.",
+    "effects": [
+      {
+        "type": "fortify",
+        "amount": 2
+      }
+    ]
   },
   {
     "id": "counteroffensive",
@@ -44,8 +83,14 @@
     "cost": 2,
     "text": "Push the Front back 2. +1 Morale.",
     "effects": [
-      { "type": "pushFront", "amount": 2 },
-      { "type": "gainMorale", "amount": 1 }
+      {
+        "type": "pushFront",
+        "amount": 2
+      },
+      {
+        "type": "gainMorale",
+        "amount": 1
+      }
     ]
   },
   {
@@ -54,7 +99,12 @@
     "type": "security",
     "cost": 1,
     "text": "+3 Secrecy.",
-    "effects": [{ "type": "protectSecrecy", "amount": 3 }]
+    "effects": [
+      {
+        "type": "protectSecrecy",
+        "amount": 3
+      }
+    ]
   },
   {
     "id": "cover-story",
@@ -63,8 +113,14 @@
     "cost": 0,
     "text": "+1 Secrecy. Draw 1.",
     "effects": [
-      { "type": "protectSecrecy", "amount": 1 },
-      { "type": "drawCards", "amount": 1 }
+      {
+        "type": "protectSecrecy",
+        "amount": 1
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
     ]
   },
   {
@@ -73,7 +129,12 @@
     "type": "people",
     "cost": 1,
     "text": "+3 Budget.",
-    "effects": [{ "type": "gainBudget", "amount": 3 }]
+    "effects": [
+      {
+        "type": "gainBudget",
+        "amount": 3
+      }
+    ]
   },
   {
     "id": "rally-the-workers",
@@ -81,7 +142,12 @@
     "type": "people",
     "cost": 1,
     "text": "+3 Morale.",
-    "effects": [{ "type": "gainMorale", "amount": 3 }]
+    "effects": [
+      {
+        "type": "gainMorale",
+        "amount": 3
+      }
+    ]
   },
   {
     "id": "morning-briefing",
@@ -89,6 +155,11 @@
     "type": "people",
     "cost": 0,
     "text": "Draw 2.",
-    "effects": [{ "type": "drawCards", "amount": 2 }]
+    "effects": [
+      {
+        "type": "drawCards",
+        "amount": 2
+      }
+    ]
   }
 ]

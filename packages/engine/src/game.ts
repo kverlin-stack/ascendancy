@@ -1,5 +1,6 @@
 import { advanceFor, isQuarterEnd, yearOf } from './calendar';
 import { createRng, seedToState, type Rng } from './rng';
+import { STATE_VERSION } from './types';
 import type {
   Action,
   CardDef,
@@ -33,13 +34,15 @@ export function newGame(content: GameContent, seed: number | string): GameState 
   const { rules } = content;
   const deck: CardInstance[] = content.starterDeck.map((cardId, i) => ({ uid: i + 1, cardId }));
   const s: GameState = {
-    version: 1,
+    version: STATE_VERSION,
     seed: seedState,
     rngState: 0,
     turn: 1,
     phase: 'playing',
     lossCause: null,
-    effort: rules.effortPerTurn,
+    effort: 0,
+    maxEffort: 0,
+    fortify: 0,
     resources: {
       progress: 0,
       front: rules.frontTerritories,
@@ -54,10 +57,19 @@ export function newGame(content: GameContent, seed: number | string): GameState 
     nextUid: deck.length + 1,
     log: [],
   };
+  s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, rules.handSize, rng);
   s.threatId = pickThreat(content, rng).id;
   s.rngState = rng.state;
   return s;
+}
+
+/** Effort at the start of a turn: the base, +1 at high Morale, -1 at low Morale. */
+export function effortForTurn(s: GameState, content: GameContent): number {
+  const { rules } = content;
+  const m = s.resources.morale;
+  const bonus = m >= rules.moraleEffort.high ? 1 : m <= rules.moraleEffort.low ? -1 : 0;
+  return Math.max(1, rules.effortPerTurn + bonus);
 }
 
 export function getCard(content: GameContent, cardId: string): CardDef {
@@ -126,11 +138,14 @@ function endTurn(state: GameState, content: GameContent): GameState {
   for (const effect of threat.effects) applyThreatEffect(s, effect);
   s.log.push(`T${s.turn}: enemy ${threat.name}`);
 
-  // 2. Quarterly enemy advance.
+  // 2. Quarterly enemy advance and war weariness.
   if (isQuarterEnd(s.turn, rules)) {
     const adv = advanceFor(yearOf(s.turn, rules), rules);
-    s.resources.front = Math.max(0, s.resources.front - adv);
-    s.log.push(`T${s.turn}: quarterly advance, Front -${adv}`);
+    loseFront(s, adv);
+    s.resources.morale = Math.max(0, s.resources.morale - rules.quarterlyMoraleLoss);
+    s.log.push(
+      `T${s.turn}: quarterly advance ${adv}, war weariness -${rules.quarterlyMoraleLoss} Morale`,
+    );
   }
 
   // 3. Lose checks.
@@ -149,7 +164,8 @@ function endTurn(state: GameState, content: GameContent): GameState {
   s.discard.push(...s.hand);
   s.hand = [];
   s.turn += 1;
-  s.effort = rules.effortPerTurn;
+  s.fortify = 0;
+  s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, rules.handSize, rng);
   s.threatId = pickThreat(content, rng).id;
   s.rngState = rng.state;
@@ -175,6 +191,9 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
     case 'pushFront':
       r.front = clamp(r.front + e.amount, 0, rules.frontTerritories);
       return;
+    case 'fortify':
+      s.fortify += e.amount;
+      return;
     case 'gainBudget':
       r.budget = Math.max(0, r.budget + e.amount);
       return;
@@ -194,7 +213,7 @@ function applyThreatEffect(s: GameState, e: ThreatEffect): void {
   const r = s.resources;
   switch (e.type) {
     case 'advanceFront':
-      r.front = Math.max(0, r.front - e.amount);
+      loseFront(s, e.amount);
       return;
     case 'loseSecrecy':
       r.secrecy = Math.max(0, r.secrecy - e.amount);
@@ -206,6 +225,13 @@ function applyThreatEffect(s: GameState, e: ThreatEffect): void {
       r.morale = Math.max(0, r.morale - e.amount);
       return;
   }
+}
+
+/** Front loss, absorbed first by this turn's Fortify. */
+function loseFront(s: GameState, amount: number): void {
+  const blocked = Math.min(s.fortify, amount);
+  s.fortify -= blocked;
+  s.resources.front = Math.max(0, s.resources.front - (amount - blocked));
 }
 
 /** Draw n cards, reshuffling the discard pile into the draw pile when it runs out. */

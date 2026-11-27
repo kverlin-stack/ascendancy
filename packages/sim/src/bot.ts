@@ -32,20 +32,54 @@ export function evaluate(state: GameState, content: GameContent): number {
   if (state.phase === 'lost') return -1e6;
   const { rules } = content;
   const r = { ...state.resources };
+  let frontLoss = 0;
   for (const e of getThreat(content, state.threatId).effects) {
-    if (e.type === 'advanceFront') r.front -= e.amount;
+    if (e.type === 'advanceFront') frontLoss += e.amount;
     if (e.type === 'loseSecrecy') r.secrecy -= e.amount;
     if (e.type === 'loseBudget') r.budget -= e.amount;
     if (e.type === 'loseMorale') r.morale -= e.amount;
   }
-  if (isQuarterEnd(state.turn, rules)) r.front -= advanceFor(yearOf(state.turn, rules), rules);
+  if (isQuarterEnd(state.turn, rules)) {
+    frontLoss += advanceFor(yearOf(state.turn, rules), rules);
+    r.morale -= rules.quarterlyMoraleLoss;
+  }
+  r.front -= Math.max(0, frontLoss - state.fortify);
 
+  const reserve = reserves(content);
   let score = r.progress * 1.0;
   for (const key of ['front', 'secrecy', 'budget', 'morale'] as const) {
     const v = r[key];
-    score += v <= 0 ? -1e4 : -DANGER[key] / v;
+    if (v <= 0) return -1e4 + score;
+    // Steeper as the value nears 0, plus a margin for the biggest hit that could come next turn.
+    score += -DANGER[key] / v - MARGIN * Math.max(0, reserve[key] + 1 - v);
   }
   return score;
+}
+
+/** Penalty per point a resource sits inside its safety margin. */
+const MARGIN = 3;
+
+const reserveCache = new WeakMap<
+  GameContent,
+  Record<'front' | 'secrecy' | 'budget' | 'morale', number>
+>();
+
+/** The biggest single enemy hit each resource can take, so the bot keeps a cushion. */
+function reserves(content: GameContent) {
+  const cached = reserveCache.get(content);
+  if (cached) return cached;
+  const max = { front: 0, secrecy: 0, budget: 0, morale: 0 };
+  for (const t of content.threats) {
+    for (const e of t.effects) {
+      if (e.type === 'advanceFront') max.front = Math.max(max.front, e.amount);
+      if (e.type === 'loseSecrecy') max.secrecy = Math.max(max.secrecy, e.amount);
+      if (e.type === 'loseBudget') max.budget = Math.max(max.budget, e.amount);
+      if (e.type === 'loseMorale') max.morale = Math.max(max.morale, e.amount);
+    }
+  }
+  max.front += Math.max(...content.rules.advanceByYear);
+  reserveCache.set(content, max);
+  return max;
 }
 
 /**

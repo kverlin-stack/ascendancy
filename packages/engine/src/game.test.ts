@@ -194,6 +194,61 @@ describe('endTurn', () => {
   });
 });
 
+describe('fortify', () => {
+  const raid = (amount: number): GameContent =>
+    testContent({
+      threats: [
+        {
+          id: 'raid',
+          name: 'Raid',
+          text: '',
+          weight: 1,
+          effects: [{ type: 'advanceFront', amount }],
+        },
+      ],
+    });
+
+  it('blocks Front loss from the enemy action this turn', () => {
+    const c = raid(3);
+    const s0 = withHand(newGame(c, 1), ['wall']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
+    expect(s1.fortify).toBe(2);
+    const s2 = applyAction(s1, { type: 'endTurn' }, c);
+    expect(s2.resources.front).toBe(9);
+  });
+
+  it('carries over to the quarterly advance, then expires at end of turn', () => {
+    const c = raid(1);
+    const s0 = withHand(newGame(c, 1), ['wall', 'wall']);
+    s0.turn = 3; // quarter end: raid 1 + advance 1 = 2 loss, 4 blocked
+    let s = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
+    s = applyAction(s, { type: 'playCard', uid: 1001 }, c);
+    s = applyAction(s, { type: 'endTurn' }, c);
+    expect(s.resources.front).toBe(10);
+    expect(s.fortify).toBe(0);
+  });
+});
+
+describe('morale', () => {
+  it('high Morale gives +1 Effort, low Morale gives -1', () => {
+    const s0 = newGame(content, 1);
+    const at = (morale: number) =>
+      applyAction({ ...s0, resources: { ...s0.resources, morale } }, { type: 'endTurn' }, content)
+        .effort;
+    expect(at(5)).toBe(3);
+    expect(at(8)).toBe(4);
+    expect(at(2)).toBe(2);
+  });
+
+  it('war weariness costs Morale every quarter', () => {
+    const c = testContent();
+    c.rules.quarterlyMoraleLoss = 1;
+    let s = newGame(c, 1);
+    for (let i = 0; i < 6; i++) s = applyAction(s, { type: 'endTurn' }, c);
+    expect(s.resources.morale).toBe(3);
+  });
+});
+
 describe('replays', () => {
   it('the same seed and actions always produce the same run', () => {
     const play = (): GameState => {

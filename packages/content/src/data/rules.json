@@ -6,6 +6,11 @@
   "turnsPerQuarter": 3,
   "quartersPerYear": 4,
   "advanceByYear": [2, 3, 4],
+  "moraleEffort": {
+    "high": 8,
+    "low": 3
+  },
+  "quarterlyMoraleLoss": 1,
   "start": {
     "budget": 12,
     "secrecy": 10,

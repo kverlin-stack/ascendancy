@@ -12,9 +12,9 @@
   {
     "id": "spy-ring",
     "name": "Spy Ring",
-    "text": "-3 Secrecy.",
+    "text": "-2 Secrecy.",
     "weight": 2,
-    "effects": [{ "type": "loseSecrecy", "amount": 3 }]
+    "effects": [{ "type": "loseSecrecy", "amount": 2 }]
   },
   {
     "id": "naval-blockade",

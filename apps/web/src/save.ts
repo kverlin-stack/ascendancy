@@ -1,6 +1,6 @@
-import type { GameState } from '@ascendancy/engine';
+import { STATE_VERSION, type GameState } from '@ascendancy/engine';
 
-const KEY = 'ascendancy.run.v1';
+const KEY = 'ascendancy.run';
 
 /** Load the saved run, or null. Storage can be blocked or cleared, so never throw. */
 export function loadRun(): GameState | null {
@@ -8,7 +8,7 @@ export function loadRun(): GameState | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as GameState;
-    return s && s.version === 1 && Array.isArray(s.hand) ? s : null;
+    return s && s.version === STATE_VERSION && Array.isArray(s.hand) ? s : null;
   } catch {
     return null;
   }

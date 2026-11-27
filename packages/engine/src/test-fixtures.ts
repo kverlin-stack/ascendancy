@@ -11,10 +11,20 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       turnsPerQuarter: 3,
       quartersPerYear: 4,
       advanceByYear: [1, 2, 3],
+      moraleEffort: { high: 8, low: 2 },
+      quarterlyMoraleLoss: 0,
       start: { budget: 5, secrecy: 5, morale: 5 },
       max: { secrecy: 10, morale: 10 },
     },
     cards: [
+      {
+        id: 'wall',
+        name: 'Wall',
+        type: 'warEffort',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'fortify', amount: 2 }],
+      },
       {
         id: 'lab',
         name: 'Lab',

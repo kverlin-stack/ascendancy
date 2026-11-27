@@ -9,6 +9,8 @@ export type CardType = 'research' | 'warEffort' | 'security' | 'people';
 export type CardEffect =
   | { type: 'addProgress'; amount: number }
   | { type: 'pushFront'; amount: number }
+  /** Block this much Front loss this turn (enemy action and quarterly advance). */
+  | { type: 'fortify'; amount: number }
   | { type: 'gainBudget'; amount: number }
   | { type: 'protectSecrecy'; amount: number }
   | { type: 'gainMorale'; amount: number }
@@ -49,6 +51,10 @@ export interface Rules {
   quartersPerYear: number;
   /** Enemy Advance per quarter for year 1, 2, 3...; the last value repeats. */
   advanceByYear: number[];
+  /** Morale at or above `high` gives +1 Effort per turn; at or below `low`, -1. */
+  moraleEffort: { high: number; low: number };
+  /** War weariness: Morale lost at every quarter end. */
+  quarterlyMoraleLoss: number;
   start: { budget: number; secrecy: number; morale: number };
   max: { secrecy: number; morale: number };
 }
@@ -78,8 +84,11 @@ export interface Resources {
   morale: number;
 }
 
+/** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
+export const STATE_VERSION = 2;
+
 export interface GameState {
-  version: 1;
+  version: number;
   seed: number;
   rngState: number;
   /** 1-based. Each turn is one month. */
@@ -87,6 +96,10 @@ export interface GameState {
   phase: Phase;
   lossCause: LossCause | null;
   effort: number;
+  /** Effort this turn started with (base adjusted by Morale). */
+  maxEffort: number;
+  /** Front loss blocked for the rest of this turn. */
+  fortify: number;
   resources: Resources;
   drawPile: CardInstance[];
   hand: CardInstance[];

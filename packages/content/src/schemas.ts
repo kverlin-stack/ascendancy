@@ -14,6 +14,7 @@ const effect = <T extends string>(type: T, amt: z.ZodNumber) =>
 export const CardEffectSchema = z.discriminatedUnion('type', [
   effect('addProgress', positive),
   effect('pushFront', positive),
+  effect('fortify', positive),
   effect('gainBudget', amount),
   effect('protectSecrecy', amount),
   effect('gainMorale', amount),
@@ -57,6 +58,8 @@ export const RulesSchema: z.ZodType<Rules> = z
     turnsPerQuarter: positive,
     quartersPerYear: positive,
     advanceByYear: z.array(z.number().int().min(0)).min(1),
+    moraleEffort: z.object({ high: positive, low: positive }).strict(),
+    quarterlyMoraleLoss: z.number().int().min(0),
     start: z.object({ budget: positive, secrecy: positive, morale: positive }).strict(),
     max: z.object({ secrecy: positive, morale: positive }).strict(),
   })
