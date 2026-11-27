@@ -89,18 +89,55 @@ export interface Rules {
   quarterlyMoraleLoss: number;
   /** Morale lost when a scientist burns out. */
   burnoutMoraleLoss: number;
-  /** Card picks offered after each quarter. */
-  reward: { choices: number; weights: { common: number; uncommon: number; rare: number } };
+  /** Picks offered between quarters. */
+  reward: {
+    choices: number;
+    weights: { common: number; uncommon: number; rare: number };
+    /** Facilities offered per Facility pick. */
+    facilityChoices: number;
+    /** Offer a Facility pick before the first turn. */
+    startFacility: boolean;
+    /** Run quarters after which the report offers Facilities instead of cards. */
+    facilityQuarters: number[];
+  };
   start: { budget: number; secrecy: number; morale: number };
   max: { secrecy: number; morale: number };
 }
 
-/** Run-wide rules a Director imposes. */
-export type DirectorRule =
-  /** The first Research card played each turn gives extra Progress. */
-  | { type: 'firstResearchBonus'; amount: number }
+/** Threat effects a rule can soften. */
+export type ReducibleThreat =
+  'advanceFront' | 'loseSecrecy' | 'loseBudget' | 'loseMorale' | 'loseProgress';
+
+/** Run-wide rules, shared by Directors and Facilities. */
+export type RunRule =
+  /** Card effects applied at the start of every turn. */
+  | { type: 'onTurnStart'; effects: CardEffect[] }
+  /** Card effects applied at every quarter end (after the advance and war weariness). */
+  | { type: 'onQuarterEnd'; effects: CardEffect[] }
+  /** Card effects added to the first card of a type played each turn. */
+  | { type: 'onFirstPlayOfType'; cardType: CardType; effects: CardEffect[] }
+  /** Extra Effort every turn. */
+  | { type: 'effortBonus'; amount: number }
+  /** Extra cards drawn every turn. */
+  | { type: 'drawBonus'; amount: number }
   /** Changes every scientist's Burnout limit (negative = burn out sooner). Never below 1. */
-  | { type: 'burnoutLimit'; amount: number };
+  | { type: 'burnoutLimit'; amount: number }
+  /** Enemy orders (and curses) of this kind hit for less. */
+  | { type: 'reduceThreat'; effect: ReducibleThreat; amount: number }
+  /** See this many more upcoming enemy orders. */
+  | { type: 'intel'; amount: number };
+
+/** @deprecated alias kept for readability in director data. */
+export type DirectorRule = RunRule;
+
+export interface FacilityDef {
+  id: string;
+  name: string;
+  rarity: 'common' | 'uncommon' | 'rare';
+  text: string;
+  flavorText?: string | undefined;
+  rules: RunRule[];
+}
 
 export interface DirectorDef {
   id: string;
@@ -110,7 +147,7 @@ export interface DirectorDef {
   text: string;
   /** Card ids, duplicates allowed. */
   starterDeck: string[];
-  rules: DirectorRule[];
+  rules: RunRule[];
 }
 
 export interface GameContent {
@@ -118,6 +155,7 @@ export interface GameContent {
   cards: CardDef[];
   threats: ThreatDef[];
   directors: DirectorDef[];
+  facilities: FacilityDef[];
 }
 
 export interface CardInstance {
@@ -125,7 +163,7 @@ export interface CardInstance {
   cardId: string;
 }
 
-/** 'reward' = between quarters, waiting for the player to pick a card. */
+/** 'reward' = waiting for the player to pick a card or Facility (between quarters, or before turn 1). */
 export type Phase = 'playing' | 'reward' | 'won' | 'lost';
 export type LossCause = 'front' | 'secrecy' | 'budget' | 'morale';
 
@@ -139,14 +177,14 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 8;
+export const STATE_VERSION = 9;
 
 export interface GameState {
   version: number;
   seed: number;
   rngState: number;
   directorId: string;
-  /** 1-based. Each turn is one month. */
+  /** 1-based. Each turn is one month. 0 while the opening Facility pick is on screen. */
   turn: number;
   phase: Phase;
   lossCause: LossCause | null;
@@ -155,13 +193,17 @@ export interface GameState {
   maxEffort: number;
   /** Front loss blocked for the rest of this turn. */
   fortify: number;
-  /** Research cards played so far this turn. */
-  researchThisTurn: number;
+  /** Card types played so far this turn (for first-of-type rules). */
+  typesPlayedThisTurn: CardType[];
+  /** Facilities owned, in the order they were gained. */
+  facilities: string[];
   resources: Resources;
   drawPile: CardInstance[];
   hand: CardInstance[];
   discard: CardInstance[];
-  /** Card ids offered in the 'reward' phase. */
+  /** What the 'reward' phase is offering. */
+  rewardKind: 'card' | 'facility';
+  /** Card or Facility ids offered in the 'reward' phase. */
   rewardOptions: string[];
   /** Cards gone for the run (burned-out scientists, exhausted cards). */
   lost: CardInstance[];
@@ -178,5 +220,5 @@ export interface GameState {
 export type Action =
   | { type: 'playCard'; uid: number }
   | { type: 'endTurn' }
-  /** Pick one of the offered cards, or null to skip. */
-  | { type: 'chooseReward'; cardId: string | null };
+  /** Pick one of the offered cards or Facilities, or null to skip. */
+  | { type: 'chooseReward'; id: string | null };

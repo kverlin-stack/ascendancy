@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import type { GameContent } from '@ascendancy/engine';
 import { interpolate, leftoverTokens } from './interpolate';
-import { CardSchema, DirectorSchema, RulesSchema, ThreatSchema } from './schemas';
+import { CardSchema, DirectorSchema, FacilitySchema, RulesSchema, ThreatSchema } from './schemas';
 
 export interface RawContent {
   rules: unknown;
   cards: unknown;
   threats: unknown;
   directors: unknown;
+  facilities: unknown;
 }
 
 export class ContentError extends Error {
@@ -39,6 +40,19 @@ export function validateContent(input: RawContent): GameContent {
   const cards = parse('cards', z.array(CardSchema).min(1), raw.cards);
   const threats = parse('threats', z.array(ThreatSchema).min(1), raw.threats);
   const directors = parse('directors', z.array(DirectorSchema).min(1), raw.directors);
+  const facilities = parse('facilities', z.array(FacilitySchema), raw.facilities);
+  if (facilities) {
+    for (const dup of duplicates(facilities.map((f) => f.id)))
+      problems.push(`facilities: duplicate id "${dup}"`);
+  }
+  if (
+    rules &&
+    facilities &&
+    rules.reward.startFacility &&
+    facilities.length < rules.reward.facilityChoices
+  ) {
+    problems.push('facilities: not enough Facilities for the opening pick');
+  }
 
   if (cards) {
     for (const dup of duplicates(cards.map((c) => c.id)))
@@ -86,10 +100,10 @@ export function validateContent(input: RawContent): GameContent {
     }
   }
 
-  if (problems.length > 0 || !rules || !cards || !threats || !directors) {
+  if (problems.length > 0 || !rules || !cards || !threats || !directors || !facilities) {
     throw new ContentError(problems);
   }
-  return { rules, cards, threats, directors };
+  return { rules, cards, threats, directors, facilities };
 }
 
 function duplicates(ids: string[]): string[] {

@@ -28,18 +28,17 @@ export function playRun(content: GameContent, bot: Bot, seed: number): RunResult
     const action = bot.chooseAction(s, content);
     if (action.type === 'chooseReward') {
       offered.push(...s.rewardOptions);
-      if (action.cardId) picked.push(action.cardId);
+      if (action.id) picked.push(action.id);
     }
     if (action.type === 'playCard') {
       const id = s.hand.find((c) => c.uid === action.uid)?.cardId;
       if (id) cardPlays[id] = (cardPlays[id] ?? 0) + 1;
     }
     const next = applyAction(s, action, content);
-    // A bot that keeps choosing illegal plays would loop forever; force the turn on.
-    s =
-      next === s && action.type === 'playCard'
-        ? applyAction(s, { type: 'endTurn' }, content)
-        : next;
+    // A bot that keeps choosing illegal actions would loop forever; force the game on.
+    if (next !== s) s = next;
+    else if (s.phase === 'reward') s = applyAction(s, { type: 'chooseReward', id: null }, content);
+    else s = applyAction(s, { type: 'endTurn' }, content);
   }
   return {
     seed,
@@ -94,12 +93,17 @@ export function runSims(
   }
 
   const picks: SimSummary['picks'] = {};
-  for (const card of content.cards) {
-    if (card.rarity === 'starter' || card.rarity === 'special') continue;
-    const pickedIn = results.filter((r) => r.picked.includes(card.id));
-    picks[card.id] = {
-      offered: results.reduce((n, r) => n + r.offered.filter((id) => id === card.id).length, 0),
-      picked: results.reduce((n, r) => n + r.picked.filter((id) => id === card.id).length, 0),
+  const pickable = [
+    ...content.cards
+      .filter((c) => c.rarity !== 'starter' && c.rarity !== 'special')
+      .map((c) => c.id),
+    ...content.facilities.map((f) => f.id),
+  ];
+  for (const pid of pickable) {
+    const pickedIn = results.filter((r) => r.picked.includes(pid));
+    picks[pid] = {
+      offered: results.reduce((n, r) => n + r.offered.filter((id) => id === pid).length, 0),
+      picked: results.reduce((n, r) => n + r.picked.filter((id) => id === pid).length, 0),
       winRateWhenPicked: pickedIn.length
         ? pickedIn.filter((r) => r.won).length / pickedIn.length
         : 0,

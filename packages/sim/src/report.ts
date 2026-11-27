@@ -45,6 +45,17 @@ export function formatReport(
       `  ${card.name.padEnd(26)} ${String(p.offered).padStart(5)}  ${rate.padStart(6)}  ${win.padStart(8)}`,
     );
   }
+  lines.push('');
+  lines.push('Facility picks               offered  picked  win% when picked');
+  for (const f of content.facilities) {
+    const p = sum.picks[f.id];
+    if (!p) continue;
+    const rate = p.offered ? pct(p.picked, p.offered) : '-';
+    const win = p.picked ? pct(p.winRateWhenPicked * 100, 100) : '-';
+    lines.push(
+      `  ${f.name.padEnd(26)} ${String(p.offered).padStart(5)}  ${rate.padStart(6)}  ${win.padStart(8)}`,
+    );
+  }
   if (opts.verbose) {
     lines.push('');
     lines.push('Each loss (seed: cause, turn, progress)');

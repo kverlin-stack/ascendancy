@@ -33,6 +33,29 @@
   font-size: 13px;
   color: var(--paper-2);
 }
+.facility-row {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+  margin-right: 6px;
+  min-width: 24px;
+  height: 26px;
+}
+.facility-tile {
+  --tint: #d9c58f;
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1.5px solid #6d5a2e;
+  display: block;
+}
+.facility-tile .card-art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  display: block;
+}
 .menu-btn {
   width: 36px;
   height: 30px;

@@ -4,11 +4,13 @@ import {
   burnoutLimitOf,
   canPlay,
   getCard,
+  getFacility,
   getThreat,
   isQuarterEnd,
   yearOf,
   type Action,
   type CardDef,
+  type FacilityDef,
   type GameContent,
   type GameState,
 } from '@ascendancy/engine';
@@ -164,8 +166,31 @@ export function cardValue(card: CardDef, state: GameState, content: GameContent)
 function chooseRewardGreedy(state: GameState, content: GameContent): Action {
   let best: { id: string; v: number } | null = null;
   for (const id of state.rewardOptions) {
-    const v = cardValue(getCard(content, id), state, content);
+    const v =
+      state.rewardKind === 'facility'
+        ? facilityValue(getFacility(content, id))
+        : cardValue(getCard(content, id), state, content);
     if (!best || v > best.v) best = { id, v };
   }
-  return { type: 'chooseReward', cardId: best && best.v > 0.8 ? best.id : null };
+  // Facilities are always worth taking; weak cards dilute the deck.
+  const take = best && (state.rewardKind === 'facility' || best.v > 0.8);
+  return { type: 'chooseReward', id: take && best ? best.id : null };
+}
+
+/** Rough per-run worth of a Facility, for the bot's picks. */
+export function facilityValue(f: FacilityDef): number {
+  let v = 0;
+  for (const r of f.rules) {
+    const effects =
+      'effects' in r ? r.effects.reduce((n, e) => n + EFFECT_VALUE[e.type] * e.amount, 0) : 0;
+    if (r.type === 'onTurnStart') v += effects * 12;
+    if (r.type === 'onFirstPlayOfType') v += effects * 9;
+    if (r.type === 'onQuarterEnd') v += effects * 4;
+    if (r.type === 'effortBonus') v += r.amount * 20;
+    if (r.type === 'drawBonus') v += r.amount * 14;
+    if (r.type === 'burnoutLimit') v += r.amount * 6;
+    if (r.type === 'reduceThreat') v += r.amount * 8;
+    if (r.type === 'intel') v += r.amount * 1;
+  }
+  return v;
 }

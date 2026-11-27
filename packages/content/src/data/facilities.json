@@ -1,0 +1,184 @@
+[
+  {
+    "id": "radar-station",
+    "name": "Radar Station",
+    "rarity": "common",
+    "text": "Fortify 1 at the start of every turn.",
+    "flavorText": "The dish turns all night. Nothing crosses the hills unseen.",
+    "rules": [
+      {
+        "type": "onTurnStart",
+        "effects": [
+          {
+            "type": "fortify",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bond-office",
+    "name": "Bond Office",
+    "rarity": "common",
+    "text": "+2 Budget every quarter.",
+    "flavorText": "A queue around the block, every payday.",
+    "rules": [
+      {
+        "type": "onQuarterEnd",
+        "effects": [
+          {
+            "type": "gainBudget",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "proving-ground",
+    "name": "Proving Ground",
+    "rarity": "common",
+    "text": "Your first War Effort card each turn also Fortifies 2.",
+    "flavorText": "Every new design is tested on the range before it is trusted at the line.",
+    "rules": [
+      {
+        "type": "onFirstPlayOfType",
+        "cardType": "warEffort",
+        "effects": [
+          {
+            "type": "fortify",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "canteen",
+    "name": "Staff Canteen",
+    "rarity": "common",
+    "text": "+1 Morale every quarter.",
+    "flavorText": "Soup on Mondays. Pie on Fridays. Nobody misses a Friday.",
+    "rules": [
+      {
+        "type": "onQuarterEnd",
+        "effects": [
+          {
+            "type": "gainMorale",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coastal-batteries",
+    "name": "Coastal Batteries",
+    "rarity": "common",
+    "text": "Enemy orders take 1 less Budget.",
+    "flavorText": "The convoys get through. Mostly.",
+    "rules": [
+      {
+        "type": "reduceThreat",
+        "effect": "loseBudget",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "cipher-office",
+    "name": "Cipher Office",
+    "rarity": "uncommon",
+    "text": "Intel 2: see the next 2 {enemyShort} orders.",
+    "flavorText": "Their codes change weekly. Ours change daily.",
+    "rules": [
+      {
+        "type": "intel",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "convalescent-home",
+    "name": "Convalescent Home",
+    "rarity": "uncommon",
+    "text": "Scientists can be played 1 more time before burning out.",
+    "flavorText": "Clean sheets, quiet halls, no telephones.",
+    "rules": [
+      {
+        "type": "burnoutLimit",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "counter-espionage-bureau",
+    "name": "Counter-Espionage Bureau",
+    "rarity": "uncommon",
+    "text": "Enemy orders and Moles take 1 less Secrecy.",
+    "flavorText": "Every visitor is logged. Every log is checked twice.",
+    "rules": [
+      {
+        "type": "reduceThreat",
+        "effect": "loseSecrecy",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "central-archive",
+    "name": "Central Archive",
+    "rarity": "uncommon",
+    "text": "Your first Research card each turn gives +1 Progress.",
+    "flavorText": "Forty years of failed experiments, indexed. Most of them were useful.",
+    "rules": [
+      {
+        "type": "onFirstPlayOfType",
+        "cardType": "research",
+        "effects": [
+          {
+            "type": "addProgress",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "deep-shelters",
+    "name": "Deep Shelters",
+    "rarity": "rare",
+    "text": "Enemy orders take 1 less Front.",
+    "flavorText": "Sixty feet of rock overhead. The work goes on through the raids.",
+    "rules": [
+      {
+        "type": "reduceThreat",
+        "effect": "advanceFront",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "generator-hall",
+    "name": "Generator Hall",
+    "rarity": "rare",
+    "text": "+1 Effort every turn. -2 Budget every quarter.",
+    "flavorText": "It hums through the floorboards. The city's lights dim when it starts.",
+    "rules": [
+      {
+        "type": "effortBonus",
+        "amount": 1
+      },
+      {
+        "type": "onQuarterEnd",
+        "effects": [
+          {
+            "type": "gainBudget",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  }
+]

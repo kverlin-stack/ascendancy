@@ -7,9 +7,11 @@ import type {
   CardEffect,
   CardInstance,
   DirectorDef,
+  FacilityDef,
   GameContent,
   GameState,
   LossCause,
+  RunRule,
   ThreatDef,
   ThreatEffect,
 } from './types';
@@ -21,7 +23,7 @@ import type {
  */
 export function applyAction(state: GameState, action: Action, content: GameContent): GameState {
   if (state.phase === 'reward') {
-    return action.type === 'chooseReward' ? chooseReward(state, action.cardId, content) : state;
+    return action.type === 'chooseReward' ? chooseReward(state, action.id, content) : state;
   }
   if (state.phase !== 'playing') return state;
   switch (action.type) {
@@ -49,13 +51,14 @@ export function newGame(
     seed: seedState,
     rngState: 0,
     directorId: director.id,
-    turn: 1,
+    turn: 0,
     phase: 'playing',
     lossCause: null,
     effort: 0,
     maxEffort: 0,
     fortify: 0,
-    researchThisTurn: 0,
+    typesPlayedThisTurn: [],
+    facilities: [],
     resources: {
       progress: 0,
       front: rules.frontTerritories,
@@ -66,6 +69,7 @@ export function newGame(
     drawPile: rng.shuffle(deck),
     hand: [],
     discard: [],
+    rewardKind: 'card',
     rewardOptions: [],
     lost: [],
     burnout: {},
@@ -74,26 +78,49 @@ export function newGame(
     nextUid: deck.length + 1,
     log: [],
   };
-  s.effort = s.maxEffort = effortForTurn(s, content);
-  drawCards(s, handSizeForTurn(s, content), rng);
-  s.enemyDeck = rng.shuffle(eligibleThreats(content, 1));
-  s.threatId = drawThreat(s, content, rng);
+  if (rules.reward.startFacility) {
+    // Turn 0: the opening Facility pick, before the first hand is dealt.
+    s.rewardKind = 'facility';
+    s.rewardOptions = pickFacilityOptions(s, content, rng);
+  }
+  if (s.rewardOptions.length > 0) s.phase = 'reward';
+  else startNextTurn(s, content, rng);
   s.rngState = rng.state;
   return s;
 }
 
-/** Effort at the start of a turn: the base, minus the low-Morale penalty. */
+/** Director rules plus every owned Facility's rules. */
+export function activeRules(s: GameState, content: GameContent): RunRule[] {
+  return [
+    ...getDirector(content, s.directorId).rules,
+    ...s.facilities.flatMap((id) => getFacility(content, id).rules),
+  ];
+}
+
+function ruleTotal(
+  s: GameState,
+  content: GameContent,
+  type: 'effortBonus' | 'drawBonus' | 'burnoutLimit' | 'intel',
+): number {
+  let total = 0;
+  for (const r of activeRules(s, content)) if (r.type === type) total += r.amount;
+  return total;
+}
+
+/** Effort at the start of a turn: the base, plus rule bonuses, minus the low-Morale penalty. */
 export function effortForTurn(s: GameState, content: GameContent): number {
   const { rules } = content;
   const low = s.resources.morale <= rules.morale.low ? rules.morale.lowEffortPenalty : 0;
-  return Math.max(1, rules.effortPerTurn - low);
+  return Math.max(1, rules.effortPerTurn + ruleTotal(s, content, 'effortBonus') - low);
 }
 
 /** Cards drawn at the start of a turn: the hand size, plus the high-Morale bonus. */
 export function handSizeForTurn(s: GameState, content: GameContent): number {
   const { rules } = content;
   return (
-    rules.handSize + (s.resources.morale >= rules.morale.high ? rules.morale.highDrawBonus : 0)
+    rules.handSize +
+    ruleTotal(s, content, 'drawBonus') +
+    (s.resources.morale >= rules.morale.high ? rules.morale.highDrawBonus : 0)
   );
 }
 
@@ -109,14 +136,16 @@ export function getDirector(content: GameContent, directorId: string): DirectorD
   return d;
 }
 
-/** A scientist's Burnout limit after the Director's rules. */
+export function getFacility(content: GameContent, facilityId: string): FacilityDef {
+  const f = content.facilities.find((x) => x.id === facilityId);
+  if (!f) throw new Error(`Unknown facility: ${facilityId}`);
+  return f;
+}
+
+/** A scientist's Burnout limit after Director and Facility rules. */
 export function burnoutLimitOf(state: GameState, content: GameContent, card: CardDef): number {
   if (!card.scientist) return Infinity;
-  let limit = card.scientist.burnoutLimit;
-  for (const r of getDirector(content, state.directorId).rules) {
-    if (r.type === 'burnoutLimit') limit += r.amount;
-  }
-  return Math.max(1, limit);
+  return Math.max(1, card.scientist.burnoutLimit + ruleTotal(state, content, 'burnoutLimit'));
 }
 
 export function getThreat(content: GameContent, threatId: string): ThreatDef {
@@ -175,18 +204,13 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   const card = getCard(content, inst.cardId);
   s.effort -= card.cost;
   for (const effect of card.effects) applyCardEffect(s, effect, content, rng);
-  if (card.type === 'research') {
-    if (s.researchThisTurn === 0) {
-      for (const r of getDirector(content, s.directorId).rules) {
-        if (r.type === 'firstResearchBonus') {
-          s.resources.progress = Math.min(
-            content.rules.progressGoal,
-            s.resources.progress + r.amount,
-          );
-        }
+  if (!s.typesPlayedThisTurn.includes(card.type)) {
+    for (const r of activeRules(s, content)) {
+      if (r.type === 'onFirstPlayOfType' && r.cardType === card.type) {
+        for (const effect of r.effects) applyCardEffect(s, effect, content, rng);
       }
     }
-    s.researchThisTurn += 1;
+    s.typesPlayedThisTurn.push(card.type);
   }
   s.log.push(`T${s.turn}: played ${card.name}`);
   // Discard after effects, so a drawCards reshuffle can't pull the card straight back.
@@ -232,6 +256,9 @@ function endTurn(state: GameState, content: GameContent): GameState {
     s.log.push(
       `T${s.turn}: quarterly advance ${adv}, war weariness -${rules.quarterlyMoraleLoss} Morale`,
     );
+    for (const r of activeRules(s, content)) {
+      if (r.type === 'onQuarterEnd') for (const e of r.effects) applyCardEffect(s, e, content, rng);
+    }
   }
 
   // 3. Curses still in hand (e.g. a Mole) take effect.
@@ -267,9 +294,13 @@ function endTurn(state: GameState, content: GameContent): GameState {
   s.discard.push(...s.hand);
   s.hand = [];
 
-  // 6. After a quarter, offer a card pick before the next turn starts.
+  // 6. After a quarter, offer a card (or Facility) pick before the next turn starts.
   if (isQuarterEnd(s.turn, rules)) {
-    s.rewardOptions = pickRewardOptions(content, rng);
+    const facilityPick = rules.reward.facilityQuarters.includes(runQuarterOf(s.turn, rules));
+    s.rewardKind = facilityPick ? 'facility' : 'card';
+    s.rewardOptions = facilityPick
+      ? pickFacilityOptions(s, content, rng)
+      : pickRewardOptions(content, rng);
     if (s.rewardOptions.length > 0) {
       s.phase = 'reward';
       s.rngState = rng.state;
@@ -283,9 +314,12 @@ function endTurn(state: GameState, content: GameContent): GameState {
 
 function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
   s.turn += 1;
-  s.researchThisTurn = 0;
+  s.typesPlayedThisTurn = [];
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, handSizeForTurn(s, content), rng);
+  for (const r of activeRules(s, content)) {
+    if (r.type === 'onTurnStart') for (const e of r.effects) applyCardEffect(s, e, content, rng);
+  }
   // A new quarter shuffles newly unlocked enemy actions into the rest of the enemy deck.
   const rules = content.rules;
   if ((s.turn - 1) % rules.turnsPerQuarter === 0) {
@@ -315,19 +349,35 @@ function drawThreat(s: GameState, content: GameContent, rng: Rng): string {
   return next;
 }
 
-function chooseReward(state: GameState, cardId: string | null, content: GameContent): GameState {
-  if (cardId !== null && !state.rewardOptions.includes(cardId)) return state;
+function chooseReward(state: GameState, id: string | null, content: GameContent): GameState {
+  if (id !== null && !state.rewardOptions.includes(id)) return state;
   const s = cloneState(state);
   const rng = createRng(s.rngState);
-  if (cardId !== null) {
-    s.discard.push({ uid: s.nextUid++, cardId });
-    s.log.push(`T${s.turn}: recruited ${getCard(content, cardId).name}`);
+  if (id !== null && s.rewardKind === 'facility') {
+    s.facilities.push(id);
+    s.log.push(`T${s.turn}: requisitioned ${getFacility(content, id).name}`);
+  } else if (id !== null) {
+    s.discard.push({ uid: s.nextUid++, cardId: id });
+    s.log.push(`T${s.turn}: recruited ${getCard(content, id).name}`);
   }
   s.rewardOptions = [];
   s.phase = 'playing';
   startNextTurn(s, content, rng);
   s.rngState = rng.state;
   return s;
+}
+
+/** Distinct Facilities you don't own yet, weighted by rarity. */
+export function pickFacilityOptions(s: GameState, content: GameContent, rng: Rng): string[] {
+  const { weights, facilityChoices } = content.rules.reward;
+  let pool = content.facilities.filter((f) => !s.facilities.includes(f.id));
+  const picks: string[] = [];
+  while (picks.length < facilityChoices && pool.length > 0) {
+    const f = rng.pickWeighted(pool, (x) => weights[x.rarity]);
+    picks.push(f.id);
+    pool = pool.filter((x) => x.id !== f.id);
+  }
+  return picks;
 }
 
 /** Distinct non-starter cards, weighted by rarity. */
@@ -385,8 +435,20 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
   }
 }
 
-function applyThreatEffect(s: GameState, e: ThreatEffect, content: GameContent, rng: Rng): void {
+/** How much rules soften this kind of enemy hit. */
+function threatReduction(s: GameState, content: GameContent, type: ThreatEffect['type']): number {
+  let total = 0;
+  for (const r of activeRules(s, content))
+    if (r.type === 'reduceThreat' && r.effect === type) total += r.amount;
+  return total;
+}
+
+function applyThreatEffect(s: GameState, raw: ThreatEffect, content: GameContent, rng: Rng): void {
   const r = s.resources;
+  const e =
+    raw.type === 'addCard'
+      ? raw
+      : { ...raw, amount: Math.max(0, raw.amount - threatReduction(s, content, raw.type)) };
   switch (e.type) {
     case 'loseProgress':
       r.progress = Math.max(0, r.progress - e.amount);
@@ -451,6 +513,8 @@ export function cloneState(s: GameState): GameState {
     hand: s.hand.slice(),
     discard: s.discard.slice(),
     rewardOptions: s.rewardOptions.slice(),
+    typesPlayedThisTurn: s.typesPlayedThisTurn.slice(),
+    facilities: s.facilities.slice(),
     enemyDeck: s.enemyDeck.slice(),
     lost: s.lost.slice(),
     burnout: { ...s.burnout },

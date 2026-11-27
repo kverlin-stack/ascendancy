@@ -20,7 +20,10 @@
       "common": 6,
       "uncommon": 3,
       "rare": 1
-    }
+    },
+    "facilityChoices": 3,
+    "startFacility": true,
+    "facilityQuarters": [2]
   },
   "start": {
     "budget": 10,

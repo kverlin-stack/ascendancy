@@ -58,3 +58,17 @@ export const DEFAULT_PORTRAIT: PortraitSpec = {
   coat: 'lab',
   accent: 'red',
 };
+
+export const FACILITY_MOTIF: Record<string, string> = {
+  'radar-station': 'radar',
+  'bond-office': 'bonds',
+  'proving-ground': 'tank',
+  canteen: 'coffee',
+  'coastal-batteries': 'cannon',
+  'cipher-office': 'typewriter',
+  'convalescent-home': 'seaside',
+  'counter-espionage-bureau': 'eye',
+  'central-archive': 'papers',
+  'deep-shelters': 'compound',
+  'generator-hall': 'gearSpark',
+};

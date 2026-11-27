@@ -5,6 +5,7 @@ import {
   burnoutLimitOf,
   getCard,
   getDirector,
+  getFacility,
   getThreat,
   newGame,
   quarterOf,
@@ -21,11 +22,16 @@ import { BLOCKED, S, STAT_INFO, STAT_LABEL, type StatKey } from './strings';
 import { Card } from './components/Card';
 import { Hand } from './components/Hand';
 import { FrontTrack, Gauge, Sheet, StatTag, Telegram } from './components/Board';
+import { FacilityCard, FacilityTile } from './components/FacilityCard';
 
 const { rules } = content;
 
 type SheetKind =
-  { kind: 'stat'; stat: StatKey } | { kind: 'front' } | { kind: 'orders' } | { kind: 'menu' };
+  | { kind: 'stat'; stat: StatKey }
+  | { kind: 'front' }
+  | { kind: 'orders' }
+  | { kind: 'menu' }
+  | { kind: 'facilities' };
 
 function randomSeed(): number {
   // UI-side only: the engine itself never uses Math.random.
@@ -66,7 +72,8 @@ export function App() {
 
   const r = state.resources;
   const director = getDirector(content, state.directorId);
-  const threat = getThreat(content, state.threatId);
+  // No enemy order exists yet during the opening Facility pick (turn 0).
+  const threat = state.threatId ? getThreat(content, state.threatId) : null;
   const untilAdvance = turnsUntilAdvance(state, rules);
   const nextAdvance = advanceFor(yearOf(state.turn + untilAdvance - 1, rules), rules);
   const selInst = state.hand.find((c) => c.uid === selected) ?? null;
@@ -83,8 +90,18 @@ export function App() {
     <main className="app">
       <header className="topbar">
         <span className="turn">
-          {S.turnLabel(yearOf(state.turn, rules), quarterOf(state.turn, rules), state.turn)}
+          {state.turn > 0 &&
+            S.turnLabel(yearOf(state.turn, rules), quarterOf(state.turn, rules), state.turn)}
         </span>
+        <button
+          className="facility-row"
+          onClick={() => setSheet({ kind: 'facilities' })}
+          aria-label={S.facilitiesTitle}
+        >
+          {state.facilities.map((id) => (
+            <FacilityTile key={id} facility={getFacility(content, id)} />
+          ))}
+        </button>
         <button className="menu-btn" onClick={() => setSheet({ kind: 'menu' })} aria-label={S.menu}>
           ☰
         </button>
@@ -125,13 +142,17 @@ export function App() {
         onTap={() => setSheet({ kind: 'front' })}
       />
 
-      <Telegram
-        title={S.enemyTitle}
-        name={threat.name}
-        text={threat.text}
-        ordersLeft={state.enemyDeck.length}
-        onTap={() => setSheet({ kind: 'orders' })}
-      />
+      {threat ? (
+        <Telegram
+          title={S.enemyTitle}
+          name={threat.name}
+          text={threat.text}
+          ordersLeft={state.enemyDeck.length}
+          onTap={() => setSheet({ kind: 'orders' })}
+        />
+      ) : (
+        <div />
+      )}
 
       <section className="ticker" aria-live="polite">
         {state.log.slice(-3).map((line, i, arr) => (
@@ -222,6 +243,21 @@ export function App() {
           <p className="dim small">{S.ordersSheetHint}</p>
         </Sheet>
       )}
+      {sheet?.kind === 'facilities' && (
+        <Sheet title={S.facilitiesTitle} onClose={() => setSheet(null)}>
+          {state.facilities.length === 0 && <p className="dim">{S.facilitiesNone}</p>}
+          <ul className="orders">
+            {state.facilities.map((id) => {
+              const f = getFacility(content, id);
+              return (
+                <li key={id}>
+                  <strong>{f.name}.</strong> {f.text}
+                </li>
+              );
+            })}
+          </ul>
+        </Sheet>
+      )}
       {sheet?.kind === 'menu' && (
         <Sheet title={director.name} onClose={() => setSheet(null)}>
           <p>
@@ -242,49 +278,81 @@ export function App() {
       {state.phase === 'reward' && (
         <div className="overlay">
           <div className="reward">
-            <h2>{S.rewardTitle(quarterOf(state.turn, rules))}</h2>
-            <p className="dim">{S.rewardHint}</p>
-            <div className="picks">
-              {state.rewardOptions.map((id) => {
-                const card = getCard(content, id);
-                return (
-                  <Card
-                    key={id}
-                    card={card}
-                    size="pick"
-                    selected={pick === id}
-                    burnout={
-                      card.scientist
-                        ? { used: 0, limit: burnoutLimitOf(state, content, card) }
-                        : undefined
-                    }
-                    onClick={() => setPick(id)}
-                  />
-                );
-              })}
-            </div>
-            <p className="pick-detail">
-              {pick ? (getCard(content, pick).flavorText ?? '') : S.pickOne}
-            </p>
+            {state.rewardKind === 'facility' ? (
+              <>
+                <h2>
+                  {state.turn === 0
+                    ? S.openingPickTitle
+                    : S.facilityPickTitle(quarterOf(state.turn, rules))}
+                </h2>
+                <p className="dim">{state.turn === 0 ? S.openingPickHint : S.facilityPickHint}</p>
+                <div className="picks">
+                  {state.rewardOptions.map((id) => (
+                    <FacilityCard
+                      key={id}
+                      facility={getFacility(content, id)}
+                      selected={pick === id}
+                      onClick={() => setPick(id)}
+                    />
+                  ))}
+                </div>
+                <p className="pick-detail">
+                  {pick ? (getFacility(content, pick).flavorText ?? '') : S.pickOne}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>{S.rewardTitle(quarterOf(state.turn, rules))}</h2>
+                <p className="dim">{S.rewardHint}</p>
+                <div className="picks">
+                  {state.rewardOptions.map((id) => {
+                    const card = getCard(content, id);
+                    return (
+                      <Card
+                        key={id}
+                        card={card}
+                        size="pick"
+                        selected={pick === id}
+                        burnout={
+                          card.scientist
+                            ? { used: 0, limit: burnoutLimitOf(state, content, card) }
+                            : undefined
+                        }
+                        onClick={() => setPick(id)}
+                      />
+                    );
+                  })}
+                </div>
+                <p className="pick-detail">
+                  {pick ? (getCard(content, pick).flavorText ?? '') : S.pickOne}
+                </p>
+              </>
+            )}
             <button
               className="end-turn grain"
               disabled={!pick}
               onClick={() => {
-                act({ type: 'chooseReward', cardId: pick });
+                act({ type: 'chooseReward', id: pick });
                 setPick(null);
               }}
             >
-              {pick ? S.recruit(getCard(content, pick).name) : S.pickOne}
+              {!pick
+                ? S.pickOne
+                : state.rewardKind === 'facility'
+                  ? S.requisition(getFacility(content, pick).name)
+                  : S.recruit(getCard(content, pick).name)}
             </button>
-            <button
-              className="skip"
-              onClick={() => {
-                act({ type: 'chooseReward', cardId: null });
-                setPick(null);
-              }}
-            >
-              {S.skip}
-            </button>
+            {(state.rewardKind === 'card' || state.turn > 0) && (
+              <button
+                className="skip"
+                onClick={() => {
+                  act({ type: 'chooseReward', id: null });
+                  setPick(null);
+                }}
+              >
+                {S.skip}
+              </button>
+            )}
           </div>
         </div>
       )}

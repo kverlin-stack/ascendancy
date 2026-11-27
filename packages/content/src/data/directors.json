@@ -21,8 +21,14 @@
     ],
     "rules": [
       {
-        "type": "firstResearchBonus",
-        "amount": 2
+        "type": "onFirstPlayOfType",
+        "cardType": "research",
+        "effects": [
+          {
+            "type": "addProgress",
+            "amount": 2
+          }
+        ]
       },
       {
         "type": "burnoutLimit",

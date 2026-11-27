@@ -22,7 +22,7 @@ function withHand(state: GameState, cardIds: string[]): GameState {
 }
 
 function skipReward(s: GameState, c: GameContent = content): GameState {
-  return s.phase === 'reward' ? applyAction(s, { type: 'chooseReward', cardId: null }, c) : s;
+  return s.phase === 'reward' ? applyAction(s, { type: 'chooseReward', id: null }, c) : s;
 }
 
 function cardCount(s: GameState): number {
@@ -354,7 +354,7 @@ describe('quarterly card picks', () => {
     const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
     const pick = s1.rewardOptions[0] as string;
     const total = cardCount(s1);
-    const s2 = applyAction(s1, { type: 'chooseReward', cardId: pick }, content);
+    const s2 = applyAction(s1, { type: 'chooseReward', id: pick }, content);
     expect(s2.phase).toBe('playing');
     expect(s2.turn).toBe(4);
     expect(s2.hand).toHaveLength(5);
@@ -365,7 +365,7 @@ describe('quarterly card picks', () => {
 
   it('skipping adds nothing', () => {
     const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
-    const s2 = applyAction(s1, { type: 'chooseReward', cardId: null }, content);
+    const s2 = applyAction(s1, { type: 'chooseReward', id: null }, content);
     expect(cardCount(s2)).toBe(cardCount(s1));
     expect(s2.turn).toBe(4);
   });
@@ -373,10 +373,10 @@ describe('quarterly card picks', () => {
   it('ignores cards that were not offered, and other actions during the pick', () => {
     const s1 = applyAction(atQuarterEnd(), { type: 'endTurn' }, content);
     const notOffered = content.cards.find((c) => !s1.rewardOptions.includes(c.id))!.id;
-    expect(applyAction(s1, { type: 'chooseReward', cardId: notOffered }, content)).toBe(s1);
+    expect(applyAction(s1, { type: 'chooseReward', id: notOffered }, content)).toBe(s1);
     expect(applyAction(s1, { type: 'endTurn' }, content)).toBe(s1);
     expect(
-      applyAction(newGame(content, 1), { type: 'chooseReward', cardId: null }, content).phase,
+      applyAction(newGame(content, 1), { type: 'chooseReward', id: null }, content).phase,
     ).toBe('playing');
   });
 });
@@ -486,15 +486,21 @@ describe('director rules', () => {
     return c;
   };
 
-  it('firstResearchBonus adds Progress to the first Research card each turn only', () => {
-    const c = withRules([{ type: 'firstResearchBonus', amount: 2 }]);
+  it('onFirstPlayOfType adds effects to the first card of that type each turn only', () => {
+    const c = withRules([
+      {
+        type: 'onFirstPlayOfType',
+        cardType: 'research',
+        effects: [{ type: 'addProgress', amount: 2 }],
+      },
+    ]);
     const s0 = withHand(newGame(c, 1), ['lab', 'lab']);
     const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
     expect(s1.resources.progress).toBe(4);
     const s2 = applyAction(s1, { type: 'playCard', uid: 1001 }, c);
     expect(s2.resources.progress).toBe(6);
     const s3 = applyAction(s2, { type: 'endTurn' }, c);
-    expect(s3.researchThisTurn).toBe(0);
+    expect(s3.typesPlayedThisTurn).toEqual([]);
   });
 
   it('burnoutLimit makes scientists burn out sooner, but never below 1 play', () => {
@@ -509,6 +515,80 @@ describe('director rules', () => {
   it('newGame uses the chosen director and rejects unknown ones', () => {
     expect(newGame(content, 1, 'd').directorId).toBe('d');
     expect(() => newGame(content, 1, 'nobody')).toThrow(/Unknown director/);
+  });
+});
+
+describe('facilities', () => {
+  const own = (c: GameContent, ...ids: string[]): GameState => ({
+    ...newGame(c, 1),
+    facilities: ids,
+  });
+
+  it('onTurnStart applies at the start of each turn', () => {
+    const s = applyAction(own(content, 'radar'), { type: 'endTurn' }, content);
+    expect(s.fortify).toBe(1);
+  });
+
+  it('onQuarterEnd applies at each quarter end', () => {
+    const s0 = { ...own(content, 'bonds-office'), turn: 3 };
+    const s1 = skipReward(applyAction(s0, { type: 'endTurn' }, content));
+    expect(s1.resources.budget).toBe(7);
+  });
+
+  it('onFirstPlayOfType fires once per turn per type', () => {
+    const s0 = withHand(own(content, 'proving'), ['hold', 'hold']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.fortify).toBe(2);
+    const s2 = applyAction(s1, { type: 'playCard', uid: 1001 }, content);
+    expect(s2.fortify).toBe(2);
+  });
+
+  it('effortBonus and drawBonus raise Effort and hand size', () => {
+    const s = applyAction(own(content, 'generator'), { type: 'endTurn' }, content);
+    expect(s.effort).toBe(4);
+    expect(s.hand).toHaveLength(6);
+  });
+
+  it('reduceThreat softens matching enemy hits', () => {
+    const c = testContent({
+      threats: [
+        {
+          id: 'b',
+          name: 'B',
+          text: '',
+          copies: 1,
+          fromQuarter: 1,
+          effects: [{ type: 'loseBudget', amount: 2 }],
+        },
+      ],
+    });
+    c.facilities = content.facilities;
+    expect(applyAction(own(c, 'batteries'), { type: 'endTurn' }, c).resources.budget).toBe(4);
+  });
+
+  it('an opening Facility pick happens on turn 0 before the first hand', () => {
+    const c = testContent();
+    c.rules.reward.startFacility = true;
+    const s0 = newGame(c, 1);
+    expect(s0.turn).toBe(0);
+    expect(s0.phase).toBe('reward');
+    expect(s0.rewardKind).toBe('facility');
+    expect(s0.hand).toHaveLength(0);
+    const s1 = applyAction(s0, { type: 'chooseReward', id: s0.rewardOptions[0]! }, c);
+    expect(s1.turn).toBe(1);
+    expect(s1.phase).toBe('playing');
+    expect(s1.facilities).toEqual([s0.rewardOptions[0]]);
+    expect(s1.hand).toHaveLength(5);
+  });
+
+  it('Facility quarters offer Facilities you do not own instead of cards', () => {
+    const c = testContent();
+    c.rules.reward.facilityQuarters = [1];
+    const s0 = { ...own(c, 'radar'), turn: 3 };
+    const s1 = applyAction(s0, { type: 'endTurn' }, c);
+    expect(s1.rewardKind).toBe('facility');
+    expect(s1.rewardOptions).toHaveLength(2);
+    expect(s1.rewardOptions).not.toContain('radar');
   });
 });
 

@@ -402,6 +402,30 @@ export const MOTIFS: Record<string, Motif> = {
       ))}
     </g>
   ),
+  radar: () => (
+    <g>
+      <path d="M30 70 l20 -26 l20 26 Z" fill={I} />
+      <path d="M22 40 q28 -36 64 -8 Z" fill={P} stroke={I} strokeWidth="3" />
+      <path d="M52 32 l14 -14" stroke={I} strokeWidth="3" />
+      <circle cx="68" cy="16" r="4" fill={R} />
+      <path d="M78 12 q10 6 10 18 M86 6 q16 10 14 30" stroke={R} strokeWidth="3" fill="none" />
+      <rect x="0" y="70" width="120" height="10" fill={I} />
+    </g>
+  ),
+  cannon: () => (
+    <g>
+      <rect x="0" y="62" width="120" height="18" fill={T} />
+      <path
+        d="M0 66 q10 -5 20 0 t20 0 t20 0 t20 0 t20 0 t20 0"
+        stroke={I}
+        strokeWidth="2"
+        fill="none"
+      />
+      <path d="M14 62 h44 v-14 h-44 Z" fill={I} />
+      <path d="M40 52 l64 -26 l3 7 l-62 28 Z" fill={I} />
+      <circle cx="108" cy="28" r="6" fill={R} />
+    </g>
+  ),
   approved: () => (
     <g>
       {[0, 1, 2, 3, 4].map((i) => (

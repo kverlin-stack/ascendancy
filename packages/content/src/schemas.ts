@@ -1,10 +1,18 @@
 import { z } from 'zod';
-import type { CardDef, DirectorDef, Rules, ThreatDef } from '@ascendancy/engine';
+import type {
+  CardDef,
+  DirectorDef,
+  FacilityDef,
+  Rules,
+  RunRule,
+  ThreatDef,
+} from '@ascendancy/engine';
 
 const id = z
   .string()
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'ids are lowercase-kebab-case, e.g. "lab-work"');
 const amount = z.number().int();
+const cardType = z.enum(['research', 'warEffort', 'security', 'people', 'status']);
 const positive = z.number().int().positive();
 
 const effect = <T extends string>(type: T, amt: z.ZodNumber) =>
@@ -35,7 +43,7 @@ export const CardSchema: z.ZodType<CardDef> = z
   .object({
     id,
     name: z.string().min(1),
-    type: z.enum(['research', 'warEffort', 'security', 'people', 'status']),
+    type: cardType,
     rarity: z.enum(['starter', 'special', 'common', 'uncommon', 'rare']),
     cost: z.number().int().min(0).max(5),
     text: z.string().min(1),
@@ -99,6 +107,9 @@ export const RulesSchema: z.ZodType<Rules> = z
             rare: z.number().min(0),
           })
           .strict(),
+        facilityChoices: positive,
+        startFacility: z.boolean(),
+        facilityQuarters: z.array(positive),
       })
       .strict(),
     start: z.object({ budget: positive, secrecy: positive, morale: positive }).strict(),
@@ -106,10 +117,40 @@ export const RulesSchema: z.ZodType<Rules> = z
   })
   .strict();
 
-export const DirectorRuleSchema = z.discriminatedUnion('type', [
-  effect('firstResearchBonus', positive),
+/** Run-wide rules, shared by Directors and Facilities. */
+export const RunRuleSchema: z.ZodType<RunRule> = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('onTurnStart'), effects: z.array(CardEffectSchema).min(1) }).strict(),
+  z.object({ type: z.literal('onQuarterEnd'), effects: z.array(CardEffectSchema).min(1) }).strict(),
+  z
+    .object({
+      type: z.literal('onFirstPlayOfType'),
+      cardType,
+      effects: z.array(CardEffectSchema).min(1),
+    })
+    .strict(),
+  effect('effortBonus', amount),
+  effect('drawBonus', amount),
   effect('burnoutLimit', amount),
+  z
+    .object({
+      type: z.literal('reduceThreat'),
+      effect: z.enum(['advanceFront', 'loseSecrecy', 'loseBudget', 'loseMorale', 'loseProgress']),
+      amount: positive,
+    })
+    .strict(),
+  effect('intel', positive),
 ]);
+
+export const FacilitySchema: z.ZodType<FacilityDef> = z
+  .object({
+    id,
+    name: z.string().min(1),
+    rarity: z.enum(['common', 'uncommon', 'rare']),
+    text: z.string().min(1),
+    flavorText: z.string().min(1).max(140).optional(),
+    rules: z.array(RunRuleSchema).min(1),
+  })
+  .strict();
 
 export const DirectorSchema: z.ZodType<DirectorDef> = z
   .object({
@@ -118,6 +159,6 @@ export const DirectorSchema: z.ZodType<DirectorDef> = z
     ruleName: z.string().min(1),
     text: z.string().min(1),
     starterDeck: z.array(id).min(5),
-    rules: z.array(DirectorRuleSchema),
+    rules: z.array(RunRuleSchema),
   })
   .strict();

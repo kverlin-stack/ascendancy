@@ -306,3 +306,15 @@
 .card.size-full .card-art {
   aspect-ratio: 120 / 72;
 }
+
+/* Facilities: brass plaque look. */
+.card.type-facility {
+  --ink-type: #6d5a2e;
+  --tint: #d9c58f;
+  background: #6d5a2e;
+}
+.card.type-facility .card-head {
+  justify-content: center;
+  text-align: center;
+  min-height: calc(var(--cw) * 0.24);
+}

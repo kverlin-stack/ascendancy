@@ -14,7 +14,13 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       morale: { high: 8, highDrawBonus: 1, low: 2, lowEffortPenalty: 1 },
       quarterlyMoraleLoss: 0,
       burnoutMoraleLoss: 2,
-      reward: { choices: 3, weights: { common: 6, uncommon: 3, rare: 1 } },
+      reward: {
+        choices: 3,
+        weights: { common: 6, uncommon: 3, rare: 1 },
+        facilityChoices: 2,
+        startFacility: false,
+        facilityQuarters: [],
+      },
       start: { budget: 5, secrecy: 5, morale: 5 },
       max: { secrecy: 10, morale: 10 },
     },
@@ -166,6 +172,52 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       },
     ],
     threats: [{ id: 'quiet', name: 'Quiet', text: '', copies: 1, fromQuarter: 1, effects: [] }],
+    facilities: [
+      {
+        id: 'radar',
+        name: 'Radar',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'onTurnStart', effects: [{ type: 'fortify', amount: 1 }] }],
+      },
+      {
+        id: 'bonds-office',
+        name: 'Bonds Office',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'onQuarterEnd', effects: [{ type: 'gainBudget', amount: 2 }] }],
+      },
+      {
+        id: 'proving',
+        name: 'Proving',
+        rarity: 'uncommon',
+        text: '',
+        rules: [
+          {
+            type: 'onFirstPlayOfType',
+            cardType: 'warEffort',
+            effects: [{ type: 'fortify', amount: 2 }],
+          },
+        ],
+      },
+      {
+        id: 'generator',
+        name: 'Generator',
+        rarity: 'rare',
+        text: '',
+        rules: [
+          { type: 'effortBonus', amount: 1 },
+          { type: 'drawBonus', amount: 1 },
+        ],
+      },
+      {
+        id: 'batteries',
+        name: 'Batteries',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'reduceThreat', effect: 'loseBudget', amount: 1 }],
+      },
+    ],
     directors: [
       {
         id: 'd',
