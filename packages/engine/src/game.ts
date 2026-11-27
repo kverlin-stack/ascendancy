@@ -78,6 +78,8 @@ export function newGame(
     scientists: {},
     threatId: '',
     enemyDeck: [],
+    threatCancelled: false,
+    intelThisTurn: 0,
     nextUid: deck.length + 1,
     log: [],
   };
@@ -98,6 +100,17 @@ export function activeRules(s: GameState, content: GameContent): RunRule[] {
     ...getDirector(content, s.directorId).rules,
     ...s.facilities.flatMap((id) => getFacility(content, id).rules),
   ];
+}
+
+/** How many upcoming enemy orders (after the current one) the player can see. */
+export function intelOf(s: GameState, content: GameContent): number {
+  return ruleTotal(s, content, 'intel') + s.intelThisTurn;
+}
+
+/** The visible upcoming enemy orders, soonest first. */
+export function upcomingThreats(s: GameState, content: GameContent): string[] {
+  const n = Math.min(intelOf(s, content), s.enemyDeck.length);
+  return s.enemyDeck.slice(s.enemyDeck.length - n).reverse();
 }
 
 function ruleTotal(
@@ -295,8 +308,12 @@ function endTurn(state: GameState, content: GameContent): GameState {
 
   // 1. The telegraphed enemy action resolves.
   const threat = getThreat(content, s.threatId);
-  for (const effect of threat.effects) applyThreatEffect(s, effect, content, rng);
-  s.log.push(`T${s.turn}: enemy ${threat.name}`);
+  if (s.threatCancelled) {
+    s.log.push(`T${s.turn}: ${threat.name} was cancelled`);
+  } else {
+    for (const effect of threat.effects) applyThreatEffect(s, effect, content, rng);
+    s.log.push(`T${s.turn}: enemy ${threat.name}`);
+  }
 
   // 2. Quarterly enemy advance and war weariness.
   if (isQuarterEnd(s.turn, rules)) {
@@ -366,6 +383,8 @@ function endTurn(state: GameState, content: GameContent): GameState {
 function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
   s.turn += 1;
   s.typesPlayedThisTurn = [];
+  s.threatCancelled = false;
+  s.intelThisTurn = 0;
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, handSizeForTurn(s, content), rng);
   for (const r of activeRules(s, content)) {
@@ -479,6 +498,20 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
       return;
     case 'drawCards':
       drawCards(s, e.amount, rng);
+      return;
+    case 'intel':
+      s.intelThisTurn += e.amount;
+      return;
+    case 'delayThreat': {
+      // Draw the next order first, so a delayed order can't come straight back.
+      const delayed = s.threatId;
+      s.threatId = drawThreat(s, content, rng);
+      s.enemyDeck.unshift(delayed);
+      s.threatCancelled = false;
+      return;
+    }
+    case 'cancelThreat':
+      s.threatCancelled = true;
       return;
     case 'restScientists':
       for (const uid of Object.keys(s.burnout)) rest(s, content, Number(uid), e.amount);

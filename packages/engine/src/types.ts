@@ -22,7 +22,13 @@ export type CardEffect =
   | { type: 'gainMorale'; amount: number }
   | { type: 'drawCards'; amount: number }
   /** Remove this much Burnout from every scientist in the deck. */
-  | { type: 'restScientists'; amount: number };
+  | { type: 'restScientists'; amount: number }
+  /** See this many more upcoming enemy orders, until end of turn. */
+  | { type: 'intel'; amount: number }
+  /** Send the current enemy order to the bottom of the enemy deck and reveal the next one. */
+  | { type: 'delayThreat' }
+  /** The current enemy order does not happen this turn. */
+  | { type: 'cancelThreat' };
 
 /** Effect primitives an enemy action can use. */
 export type ThreatEffect =
@@ -205,7 +211,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 10;
+export const STATE_VERSION = 11;
 
 export interface GameState {
   version: number;
@@ -241,8 +247,12 @@ export interface GameState {
   scientists: Record<string, ScientistRecord>;
   /** The telegraphed enemy action that resolves when this turn ends. */
   threatId: string;
-  /** Enemy actions still to come before the enemy deck reshuffles. */
+  /** Enemy actions still to come before the enemy deck reshuffles. The next one is last. */
   enemyDeck: string[];
+  /** True if this turn's order was cancelled by a card. */
+  threatCancelled: boolean;
+  /** Extra upcoming orders visible this turn, from cards. */
+  intelThisTurn: number;
   nextUid: number;
   log: string[];
 }

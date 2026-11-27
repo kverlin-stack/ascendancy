@@ -30,7 +30,8 @@ const RARITY_MARK: Record<CardDef['rarity'], string> = {
 };
 
 /** Bold the game keywords in rules text. */
-const KEYWORDS = /(Fortify \d+|Exhaust|Draw \d+|Rest all scientists \d+|Push the Front back \d+)/g;
+const KEYWORDS =
+  /(Fortify \d+|Exhaust|Draw \d+|Rest all scientists \d+|Push the Front back \d+|Intel \d+|Delay|Cancel)/g;
 function Rules({ text }: { text: string }): ReactNode {
   return text
     .split(KEYWORDS)

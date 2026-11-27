@@ -465,6 +465,76 @@
     "exhaust": true
   },
   {
+    "id": "codebreakers",
+    "name": "Codebreakers",
+    "type": "security",
+    "rarity": "common",
+    "cost": 0,
+    "text": "Intel 2: see the next 2 {enemyShort} orders this turn. Draw 1.",
+    "flavorText": "Forty clerks, one cipher, no windows.",
+    "effects": [
+      {
+        "type": "intel",
+        "amount": 2
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "feint",
+    "name": "Feint",
+    "type": "warEffort",
+    "rarity": "uncommon",
+    "cost": 1,
+    "text": "Delay the {enemyShort} order: it goes to the bottom of their deck. Fortify 1.",
+    "flavorText": "Campfires lit along an empty ridge. They marched all night toward nothing.",
+    "effects": [
+      {
+        "type": "delayThreat"
+      },
+      {
+        "type": "fortify",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "decoy-convoy",
+    "name": "Decoy Convoy",
+    "type": "security",
+    "rarity": "uncommon",
+    "cost": 1,
+    "text": "Delay the {enemyShort} order. +1 Secrecy.",
+    "flavorText": "Twelve trucks of sandbags, driven with great urgency.",
+    "effects": [
+      {
+        "type": "delayThreat"
+      },
+      {
+        "type": "protectSecrecy",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "intercepted-orders",
+    "name": "Intercepted Orders",
+    "type": "security",
+    "rarity": "rare",
+    "cost": 2,
+    "text": "Cancel the {enemyShort} order this turn. Exhaust.",
+    "flavorText": "The courier never arrived. Neither did the order.",
+    "effects": [
+      {
+        "type": "cancelThreat"
+      }
+    ],
+    "exhaust": true
+  },
+  {
     "id": "dr-ilse-varnholt",
     "name": "Dr. Ilse Varnholt",
     "type": "people",

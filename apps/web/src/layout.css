@@ -247,6 +247,7 @@
 
 /* Enemy orders telegram */
 .telegram {
+  position: relative;
   display: block;
   width: 100%;
   text-align: left;
@@ -272,6 +273,40 @@
   font-family: var(--font-type);
   font-size: 15px;
   line-height: 1.25;
+}
+
+.telegram-body.is-cancelled {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.telegram-stamp {
+  position: absolute;
+  right: 12px;
+  top: 24px;
+  transform: rotate(-8deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 15px;
+  color: var(--held);
+  border: 2px solid currentColor;
+  padding: 0 6px;
+  background: rgb(239 227 200 / 0.9);
+  z-index: 3;
+}
+.telegram-next {
+  display: block;
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px dashed var(--paper-3);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Ticker of recent events */

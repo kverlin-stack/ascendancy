@@ -41,7 +41,7 @@ export function evaluate(state: GameState, content: GameContent): number {
   let frontLoss = 0;
   // The telegraphed action, plus any curses (Moles) still in hand, hit at end of turn.
   const incoming = [
-    ...getThreat(content, state.threatId).effects,
+    ...(state.threatCancelled ? [] : getThreat(content, state.threatId).effects),
     ...state.hand.flatMap((c) => getCard(content, c.cardId).inHandAtEndOfTurn ?? []),
   ];
   for (const e of incoming) {
@@ -137,7 +137,13 @@ const EFFECT_VALUE: Record<CardDef['effects'][number]['type'], number> = {
   gainMorale: 0.8,
   drawCards: 1.3,
   restScientists: 1,
+  intel: 0.3,
+  delayThreat: 2,
+  cancelThreat: 4,
 };
+
+/** Effects without an amount (delay, cancel) count once. */
+const amountOf = (e: CardDef['effects'][number]): number => ('amount' in e ? e.amount : 1);
 
 /** Each curse in the deck counts as this much lost score, so rooting one out is worth Effort. */
 export const CURSE_VALUE = 2;
@@ -156,7 +162,8 @@ export function cardValue(card: CardDef, state: GameState, content: GameContent)
   let v = 0;
   for (const e of card.effects) {
     const per = EFFECT_VALUE[e.type] * (scale[e.type] ?? 1);
-    v += e.amount > 0 ? per * e.amount : EFFECT_VALUE[e.type] * e.amount;
+    const a = amountOf(e);
+    v += a > 0 ? per * a : EFFECT_VALUE[e.type] * a;
   }
   if (card.exhaust) v *= 0.5;
   if (card.scientist) v *= Math.min(1.2, burnoutLimitOf(state, content, card) / 3.5);
@@ -182,7 +189,7 @@ export function facilityValue(f: FacilityDef): number {
   let v = 0;
   for (const r of f.rules) {
     const effects =
-      'effects' in r ? r.effects.reduce((n, e) => n + EFFECT_VALUE[e.type] * e.amount, 0) : 0;
+      'effects' in r ? r.effects.reduce((n, e) => n + EFFECT_VALUE[e.type] * amountOf(e), 0) : 0;
     if (r.type === 'onTurnStart') v += effects * 12;
     if (r.type === 'onFirstPlayOfType') v += effects * 9;
     if (r.type === 'onQuarterEnd') v += effects * 4;

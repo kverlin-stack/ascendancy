@@ -27,6 +27,33 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
     },
     cards: [
       {
+        id: 'peek',
+        name: 'Peek',
+        type: 'security',
+        rarity: 'starter',
+        cost: 0,
+        text: '',
+        effects: [{ type: 'intel', amount: 2 }],
+      },
+      {
+        id: 'stall',
+        name: 'Stall',
+        type: 'warEffort',
+        rarity: 'starter',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'delayThreat' }],
+      },
+      {
+        id: 'veto',
+        name: 'Veto',
+        type: 'security',
+        rarity: 'starter',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'cancelThreat' }],
+      },
+      {
         id: 'mole',
         name: 'Mole',
         type: 'status',

@@ -12,6 +12,7 @@ import {
   quarterOf,
   traitsOf,
   turnsUntilAdvance,
+  upcomingThreats,
   whyCantPlay,
   yearOf,
   type Action,
@@ -150,6 +151,8 @@ export function App() {
           name={threat.name}
           text={threat.text}
           ordersLeft={state.enemyDeck.length}
+          cancelled={state.threatCancelled}
+          upcoming={upcomingThreats(state, content).map((id) => getThreat(content, id).name)}
           onTap={() => setSheet({ kind: 'orders' })}
         />
       ) : (

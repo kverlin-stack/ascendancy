@@ -104,12 +104,18 @@ export function Telegram({
   name,
   text,
   ordersLeft,
+  cancelled,
+  upcoming,
   onTap,
 }: {
   title: string;
   name: string;
   text: string;
   ordersLeft: number;
+  /** This turn's order was cancelled by a card. */
+  cancelled: boolean;
+  /** Names of the next orders the player can see (Intel), soonest first. */
+  upcoming: string[];
   onTap: () => void;
 }) {
   return (
@@ -118,9 +124,15 @@ export function Telegram({
         <span>{title}</span>
         <span>{S.ordersLeft(ordersLeft)} ›</span>
       </span>
-      <span className="telegram-body">
+      <span className={cancelled ? 'telegram-body is-cancelled' : 'telegram-body'}>
         <strong>{name.toUpperCase()}</strong> · {text}
       </span>
+      {cancelled && <span className="telegram-stamp">{S.cancelled}</span>}
+      {upcoming.length > 0 && (
+        <span className="telegram-next">
+          {S.thenLabel} {upcoming.join(' → ')}
+        </span>
+      )}
     </button>
   );
 }

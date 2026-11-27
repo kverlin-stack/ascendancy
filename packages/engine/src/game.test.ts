@@ -9,6 +9,7 @@ import {
   getCard,
   newGame,
   traitsOf,
+  upcomingThreats,
   whyCantPlay,
 } from './game';
 import { testContent } from './test-fixtures';
@@ -659,6 +660,75 @@ describe('scientist traits', () => {
     expect(costOf(s, c, 8, vet)).toBe(1);
     expect(burnoutLimitOf(s, c, vet, 7)).toBe(6);
     expect(burnoutLimitOf(s, c, vet, 8)).toBe(5);
+  });
+});
+
+describe('intel and counter-orders', () => {
+  const t = (id: string, effects: GameContent['threats'][number]['effects'] = []) => ({
+    id,
+    name: id,
+    text: '',
+    copies: 1,
+    fromQuarter: 1,
+    effects,
+  });
+  const three = testContent({
+    threats: [
+      t('a', [{ type: 'loseBudget', amount: 1 }]),
+      t('b', [{ type: 'loseSecrecy', amount: 1 }]),
+      t('c'),
+    ],
+  });
+
+  it('with no intel, no upcoming orders are visible', () => {
+    expect(upcomingThreats(newGame(three, 1), three)).toEqual([]);
+  });
+
+  it('intel reveals the next orders, soonest first, until end of turn', () => {
+    const s0 = withHand(newGame(three, 1), ['peek']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, three);
+    const seen = upcomingThreats(s1, three);
+    expect(seen).toHaveLength(2);
+    const s2 = applyAction(s1, { type: 'endTurn' }, three);
+    expect(s2.threatId).toBe(seen[0]);
+    expect(upcomingThreats(s2, three)).toEqual([]);
+  });
+
+  it('an intel rule (Facility) shows upcoming orders every turn', () => {
+    const c = testContent({ threats: three.threats });
+    c.facilities = [
+      {
+        id: 'cipher',
+        name: 'Cipher',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'intel', amount: 1 }],
+      },
+    ];
+    const s = { ...newGame(c, 1), facilities: ['cipher'] };
+    expect(upcomingThreats(s, c)).toHaveLength(1);
+  });
+
+  it('delayThreat swaps in the next order and sends the current one to the bottom', () => {
+    const s0 = withHand(newGame(three, 1), ['stall']);
+    const first = s0.threatId;
+    const next = s0.enemyDeck[s0.enemyDeck.length - 1];
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, three);
+    expect(s1.threatId).toBe(next);
+    expect(s1.enemyDeck[0]).toBe(first);
+    expect(s1.enemyDeck).toHaveLength(s0.enemyDeck.length);
+  });
+
+  it("cancelThreat stops this turn's order, and only this turn's", () => {
+    const c = testContent({ threats: [t('hit', [{ type: 'loseBudget', amount: 2 }])] });
+    const s0 = withHand(newGame(c, 1), ['veto']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, c);
+    expect(s1.threatCancelled).toBe(true);
+    const s2 = applyAction(s1, { type: 'endTurn' }, c);
+    expect(s2.resources.budget).toBe(5);
+    expect(s2.threatCancelled).toBe(false);
+    const s3 = applyAction(s2, { type: 'endTurn' }, c);
+    expect(s3.resources.budget).toBe(3);
   });
 });
 

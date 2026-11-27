@@ -29,6 +29,9 @@ export const CardEffectSchema = z.discriminatedUnion('type', [
   effect('gainMorale', amount),
   effect('drawCards', positive),
   effect('restScientists', positive),
+  effect('intel', positive),
+  z.object({ type: z.literal('delayThreat') }).strict(),
+  z.object({ type: z.literal('cancelThreat') }).strict(),
 ]);
 
 export const ThreatEffectSchema = z.discriminatedUnion('type', [

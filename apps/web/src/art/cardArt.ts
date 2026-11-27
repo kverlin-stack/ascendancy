@@ -33,6 +33,10 @@ export const CARD_MOTIF: Record<string, string> = {
   'coffee-ration': 'coffee',
   'leave-of-absence': 'seaside',
   'emergency-appropriation': 'approved',
+  codebreakers: 'radio',
+  feint: 'feint',
+  'decoy-convoy': 'rails',
+  'intercepted-orders': 'tornOrder',
 };
 
 export const TYPE_MOTIF: Record<CardDef['type'], string> = {

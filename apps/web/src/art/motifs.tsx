@@ -426,6 +426,54 @@ export const MOTIFS: Record<string, Motif> = {
       <circle cx="108" cy="28" r="6" fill={R} />
     </g>
   ),
+  radio: () => (
+    <g>
+      <path d="M60 6 v22" stroke={I} strokeWidth="3" />
+      <path d="M48 12 q12 -12 24 0 M40 6 q20 -18 40 0" stroke={R} strokeWidth="3" fill="none" />
+      <rect x="20" y="28" width="80" height="46" rx="4" fill={I} />
+      <circle cx="44" cy="51" r="14" fill={P} />
+      <path d="M44 51 l8 -8" stroke={R} strokeWidth="3" />
+      {[0, 1, 2, 3].map((i) => (
+        <rect key={i} x="68" y={38 + i * 8} width="24" height="4" fill={P} />
+      ))}
+    </g>
+  ),
+  feint: () => (
+    <g>
+      <path
+        d="M10 62 q40 -70 86 -20"
+        stroke={R}
+        strokeWidth="9"
+        fill="none"
+        strokeDasharray="12 6"
+      />
+      <path d="M104 50 l-22 -4 l14 -16 Z" fill={R} />
+      <path d="M14 70 h60" stroke={I} strokeWidth="6" />
+      <path d="M84 70 l-16 -10 v20 Z" fill={I} />
+    </g>
+  ),
+  tornOrder: () => (
+    <g>
+      <path
+        d="M22 10 h36 l-6 12 l8 12 l-8 12 l6 12 l-4 12 h-32 Z"
+        fill={P}
+        stroke={I}
+        strokeWidth="2"
+      />
+      <path
+        d="M68 10 h30 v60 h-34 l4 -12 l-6 -12 l8 -12 l-8 -12 Z"
+        fill={P}
+        stroke={I}
+        strokeWidth="2"
+      />
+      <path
+        d="M28 22 h20 M28 32 h22 M28 42 h18 M74 22 h18 M76 32 h16 M74 42 h18"
+        stroke={I}
+        strokeWidth="2"
+      />
+      <path d="M30 56 l60 -40 M30 16 l60 40" stroke={R} strokeWidth="5" />
+    </g>
+  ),
   approved: () => (
     <g>
       {[0, 1, 2, 3, 4].map((i) => (
