@@ -13,6 +13,7 @@ A single-player roguelike deckbuilder for phones, told in two acts. The full des
 - **Signature mechanics:** Burnout (overused scientists are lost for the run), the Front, and crew Risk in Act II.
 - **Legacy:** winning Act I carries 3 cards, 1 Facility and veteran scientists into Act II.
 - **Setting:** fictional alternate mid-century world. No real people, nations or science. The superweapon stays abstract, with no on-screen casualties.
+  - `docs/WORLD.md` (the world bible) is the source for all names, flavor text and UI copy. Names live in `packages/content/src/names.ts`; never hard-code them.
 
 ## Design pillars (the tiebreakers)
 

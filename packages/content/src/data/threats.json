@@ -44,7 +44,7 @@
   },
   {
     "id": "propaganda-broadcast",
-    "name": "Propaganda Broadcast",
+    "name": "{enemyShort} Broadcast",
     "text": "-2 Morale.",
     "copies": 1,
     "fromQuarter": 1,
@@ -71,7 +71,7 @@
   {
     "id": "infiltrator",
     "name": "Infiltrator",
-    "text": "A Mole is slipped into your deck.",
+    "text": "A {enemyShort} Mole is slipped into your deck.",
     "copies": 2,
     "fromQuarter": 2,
     "effects": [

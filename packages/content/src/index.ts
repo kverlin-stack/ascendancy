@@ -5,6 +5,7 @@ import directors from './data/directors.json';
 import threats from './data/threats.json';
 import { validateContent, type RawContent } from './validate';
 
+export * from './names';
 export * from './schemas';
 export * from './validate';
 

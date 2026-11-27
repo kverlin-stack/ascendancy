@@ -11,40 +11,13 @@ import {
   quarterOf,
   turnsUntilAdvance,
   yearOf,
-  type CardType,
   type GameState,
 } from '@ascendancy/engine';
 import { content } from '@ascendancy/content';
 import { loadRun, saveRun } from './save';
+import { S, STAT_INFO, STAT_LABEL, TYPE_LABEL, type StatKey } from './strings';
 
 const { rules } = content;
-
-const TYPE_LABEL: Record<CardType, string> = {
-  research: 'Research',
-  warEffort: 'War Effort',
-  security: 'Security',
-  people: 'People',
-  status: 'Status',
-};
-
-type StatKey = 'secrecy' | 'budget' | 'morale';
-
-/** What each resource means. Shown when you tap it. */
-const STAT_INFO: Record<StatKey, string> = {
-  secrecy:
-    'How well Project Sunfire stays hidden. Spy Rings lower it; Security cards restore it. At 0 the program is exposed and you lose.',
-  budget:
-    'Money to run the program. Blockades and big research drain it; favors refill it. At 0 the money runs out and you lose.',
-  morale:
-    'How hard your people can keep going. At 8+ you get +1 Effort each turn; at 3 or less, -1. War weariness costs 2 every quarter, losing a scientist to Burnout costs 2, and offensives and overtime wear it down. At 0 the staff walk out and you lose.',
-};
-
-const LOSS_TEXT: Record<string, string> = {
-  front: 'The Front reached the capital.',
-  secrecy: 'Secrecy collapsed. The program was exposed.',
-  budget: 'The money ran out.',
-  morale: 'Morale broke. The staff walked out.',
-};
 
 function randomSeed(): number {
   // UI-side only: the engine itself never uses Math.random.
@@ -78,7 +51,7 @@ export function App() {
           <strong>Year {year}</strong> · Q{quarterOf(state.turn, rules)} · Turn {state.turn}
         </div>
         <button className="link" onClick={newRun}>
-          New run
+          {S.newRun}
         </button>
       </header>
 
@@ -89,7 +62,7 @@ export function App() {
 
       <section className="progress" aria-label="Progress">
         <div className="row">
-          <span>Project Sunfire</span>
+          <span>{S.progressLabel}</span>
           <span>
             {r.progress} / {rules.progressGoal}
           </span>
@@ -101,62 +74,56 @@ export function App() {
 
       <section className="stats">
         <Stat
-          label="Secrecy"
+          label={STAT_LABEL.secrecy}
           value={r.secrecy}
           max={rules.max.secrecy}
           active={info === 'secrecy'}
           onTap={() => toggleInfo('secrecy')}
         />
         <Stat
-          label="Budget"
+          label={STAT_LABEL.budget}
           value={r.budget}
           active={info === 'budget'}
           onTap={() => toggleInfo('budget')}
         />
         <Stat
-          label="Morale"
+          label={STAT_LABEL.morale}
           value={r.morale}
           max={rules.max.morale}
           active={info === 'morale'}
           onTap={() => toggleInfo('morale')}
         />
       </section>
-      <p className="stat-info">
-        {info ? STAT_INFO[info] : 'If any of these hit 0, you lose. Tap one to learn more.'}
-      </p>
+      <p className="stat-info">{info ? STAT_INFO[info] : S.statsHint}</p>
 
       <section className="front" aria-label="The Front">
         <div className="row">
           <span>
-            Front: <strong>{r.front}</strong> / {rules.frontTerritories} held
+            Front: <strong>{S.frontHeld(r.front, rules.frontTerritories)}</strong>
           </span>
           <span className="muted">
             −{nextAdvance} in {untilAdvance} turn{untilAdvance === 1 ? '' : 's'}
           </span>
         </div>
-        {state.fortify > 0 && (
-          <div className="fortify">
-            🛡 Fortified: blocks the next {state.fortify} Front lost this turn
-          </div>
-        )}
+        {state.fortify > 0 && <div className="fortify">{S.fortified(state.fortify)}</div>}
         <div className="territories">
           {Array.from({ length: rules.frontTerritories }, (_, i) => {
             const held = i >= rules.frontTerritories - r.front;
             return <div key={i} className={held ? 'cell held' : 'cell lost'} />;
           })}
-          <div className="capital" title="Capital">
+          <div className="capital" title={S.capital}>
             ★
           </div>
         </div>
       </section>
 
       <section className="threat">
-        <span className="muted">Enemy's next move · hits when you end your turn</span>
+        <span className="muted">{S.enemyNext}</span>
         <div>
           <strong>{threat.name}</strong>: {threat.text}
         </div>
         <button className="enemy-deck" onClick={() => setShowEnemyDeck((v) => !v)}>
-          Enemy deck: {state.enemyDeck.length} left {showEnemyDeck ? '▴' : '▾'}
+          {S.enemyDeck(state.enemyDeck.length)} {showEnemyDeck ? '▴' : '▾'}
         </button>
         {showEnemyDeck && (
           <ul className="enemy-list">
@@ -166,7 +133,7 @@ export function App() {
                 <span className="muted">{getThreat(content, id).text}</span>
               </li>
             ))}
-            {state.enemyDeck.length === 0 && <li className="muted">Reshuffles next turn.</li>}
+            {state.enemyDeck.length === 0 && <li className="muted">{S.enemyDeckEmpty}</li>}
           </ul>
         )}
       </section>
@@ -198,6 +165,7 @@ export function App() {
               <span className="name">{card.name}</span>
               <span className="type">{card.scientist ? 'Scientist' : TYPE_LABEL[card.type]}</span>
               <span className="text">{card.text}</span>
+              {card.flavorText && <span className="flavor">{card.flavorText}</span>}
               {card.scientist && (
                 <Burnout
                   used={state.burnout[inst.uid] ?? 0}
@@ -207,7 +175,7 @@ export function App() {
             </button>
           );
         })}
-        {state.hand.length === 0 && <p className="muted">No cards left in hand.</p>}
+        {state.hand.length === 0 && <p className="muted">{S.emptyHand}</p>}
       </section>
 
       <ol className="log">
@@ -218,15 +186,15 @@ export function App() {
 
       <footer className="bottom">
         <button className="end-turn" onClick={() => act({ type: 'endTurn' })}>
-          End Turn
+          {S.endTurn}
         </button>
       </footer>
 
       {state.phase === 'reward' && (
         <div className="overlay" role="dialog" aria-modal="true">
           <div className="panel reward">
-            <h2>Q{quarterOf(state.turn, rules)} report</h2>
-            <p className="muted">Recruit one card into your deck, or skip.</p>
+            <h2>{S.rewardTitle(quarterOf(state.turn, rules))}</h2>
+            <p className="muted">{S.rewardHint}</p>
             <div className="hand">
               {state.rewardOptions.map((id) => {
                 const card = getCard(content, id);
@@ -242,6 +210,7 @@ export function App() {
                       {card.scientist ? 'Scientist' : TYPE_LABEL[card.type]} · {card.rarity}
                     </span>
                     <span className="text">{card.text}</span>
+                    {card.flavorText && <span className="flavor">{card.flavorText}</span>}
                     {card.scientist && (
                       <span className="role muted">
                         {card.scientist.role} Burnout {burnoutLimitOf(state, content, card)}.
@@ -255,7 +224,7 @@ export function App() {
               className="link skip"
               onClick={() => act({ type: 'chooseReward', cardId: null })}
             >
-              Skip
+              {S.skip}
             </button>
           </div>
         </div>
@@ -264,15 +233,14 @@ export function App() {
       {(state.phase === 'won' || state.phase === 'lost') && (
         <div className="overlay" role="dialog" aria-modal="true">
           <div className="panel">
-            <h2>{state.phase === 'won' ? 'Sunfire is complete' : 'The war is lost'}</h2>
+            <h2>{state.phase === 'won' ? S.wonTitle : S.lostTitle}</h2>
             <p>
               {state.phase === 'won'
-                ? `The war ends on turn ${state.turn}, with ${r.front} territories still held.`
-                : LOSS_TEXT[state.lossCause ?? ''] +
-                  ` Turn ${state.turn}, Progress ${r.progress}/${rules.progressGoal}.`}
+                ? S.wonText(state.turn, r.front)
+                : S.lostText(state.lossCause, state.turn, r.progress, rules.progressGoal)}
             </p>
             <button className="end-turn" onClick={newRun}>
-              New run
+              {S.newRun}
             </button>
           </div>
         </div>

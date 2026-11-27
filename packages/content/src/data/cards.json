@@ -6,6 +6,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+2 Progress.",
+    "flavorText": "Third shift. The blackboard has not been erased in a week.",
     "effects": [
       {
         "type": "addProgress",
@@ -20,6 +21,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "+3 Progress. -1 Morale.",
+    "flavorText": "Blackout across the city. Not in Building Four.",
     "effects": [
       {
         "type": "addProgress",
@@ -38,6 +40,7 @@
     "rarity": "starter",
     "cost": 2,
     "text": "+5 Progress. -2 Budget.",
+    "flavorText": "Bench test at 0400. Budget office not yet informed.",
     "effects": [
       {
         "type": "addProgress",
@@ -56,6 +59,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+4 Progress. -2 Secrecy.",
+    "flavorText": "Flash seen from the coast road. Someone will have questions.",
     "effects": [
       {
         "type": "addProgress",
@@ -74,6 +78,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "Fortify 2: block the next 2 Front lost this turn.",
+    "flavorText": "HOLD MILEPOST NINE STOP RELIEF EXPECTED THURSDAY STOP",
     "effects": [
       {
         "type": "fortify",
@@ -88,6 +93,7 @@
     "rarity": "starter",
     "cost": 2,
     "text": "Push the Front back 2. +1 Morale.",
+    "flavorText": "Six miles regained. The church bells rang for the first time in a year.",
     "effects": [
       {
         "type": "pushFront",
@@ -106,6 +112,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+3 Secrecy.",
+    "flavorText": "Every letter opened, read and resealed. Every face remembered.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -120,6 +127,7 @@
     "rarity": "common",
     "cost": 0,
     "text": "+1 Secrecy. Draw 1.",
+    "flavorText": "Officially, Building Four makes typewriter ribbons.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -138,6 +146,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+3 Budget.",
+    "flavorText": "The Minister owes us one. She has asked us not to say so.",
     "effects": [
       {
         "type": "gainBudget",
@@ -152,6 +161,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+3 Morale.",
+    "flavorText": "A speech, a song, and the radio turned up loud.",
     "effects": [
       {
         "type": "gainMorale",
@@ -166,6 +176,7 @@
     "rarity": "starter",
     "cost": 0,
     "text": "Draw 2.",
+    "flavorText": "0700. Maps on the wall, coffee on the maps.",
     "effects": [
       {
         "type": "drawCards",
@@ -180,6 +191,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "+2 Progress. Draw 1.",
+    "flavorText": "\"Wrong,\" said the reviewer. An hour later: \"Wrong, but interesting.\"",
     "effects": [
       {
         "type": "addProgress",
@@ -198,6 +210,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "+3 Progress. -1 Budget.",
+    "flavorText": "It howls all night. The neighbors have been told it is the trains.",
     "effects": [
       {
         "type": "addProgress",
@@ -216,6 +229,7 @@
     "rarity": "uncommon",
     "cost": 2,
     "text": "+7 Progress. -2 Budget. -1 Secrecy.",
+    "flavorText": "Twelve rooms of relays, borrowed from the {allianceShort} admiralty. They want it back by spring.",
     "effects": [
       {
         "type": "addProgress",
@@ -238,6 +252,7 @@
     "rarity": "rare",
     "cost": 0,
     "text": "+6 Progress. Exhaust.",
+    "flavorText": "She dropped the chalk and did not stop to pick it up.",
     "effects": [
       {
         "type": "addProgress",
@@ -253,6 +268,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "Fortify 3.",
+    "flavorText": "Concrete, wire, sandbags. Shovels at dawn.",
     "effects": [
       {
         "type": "fortify",
@@ -267,6 +283,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "Push the Front back 1. +1 Morale.",
+    "flavorText": "Behind {enemyShort} lines, a supply train failed to arrive. No one can say why.",
     "effects": [
       {
         "type": "pushFront",
@@ -285,6 +302,7 @@
     "rarity": "uncommon",
     "cost": 2,
     "text": "Fortify 3. Push the Front back 1.",
+    "flavorText": "The last tanks in the depot, polished and sent east.",
     "effects": [
       {
         "type": "fortify",
@@ -303,6 +321,7 @@
     "rarity": "rare",
     "cost": 3,
     "text": "Push the Front back 4. +2 Morale. Exhaust.",
+    "flavorText": "Every reserve, every gun, every truck. There is nothing behind it.",
     "effects": [
       {
         "type": "pushFront",
@@ -322,6 +341,7 @@
     "rarity": "uncommon",
     "cost": 1,
     "text": "+3 Secrecy. Draw 1.",
+    "flavorText": "He reports to the {enemyShort} on Tuesdays. He reports to us on Wednesdays.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -340,6 +360,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "+2 Secrecy. Fortify 1.",
+    "flavorText": "A map left in a cafe. Every road on it leads nowhere.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -358,6 +379,7 @@
     "rarity": "rare",
     "cost": 2,
     "text": "+6 Secrecy. +1 Morale.",
+    "flavorText": "Fences, floodlights, three checkpoints. Even the birds need clearance.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -376,6 +398,7 @@
     "rarity": "common",
     "cost": 1,
     "text": "+4 Budget. -1 Morale.",
+    "flavorText": "Every schoolchild has bought a stamp. The {allianceShort} thanks them.",
     "effects": [
       {
         "type": "gainBudget",
@@ -394,6 +417,7 @@
     "rarity": "common",
     "cost": 0,
     "text": "+1 Morale. Draw 1.",
+    "flavorText": "Real beans, from the ambassador's private stock. Do not ask.",
     "effects": [
       {
         "type": "gainMorale",
@@ -412,6 +436,7 @@
     "rarity": "uncommon",
     "cost": 1,
     "text": "Rest all scientists 2. +1 Morale.",
+    "flavorText": "Two days by the sea. Doctor's orders, and the doctor is very firm.",
     "effects": [
       {
         "type": "restScientists",
@@ -430,6 +455,7 @@
     "rarity": "rare",
     "cost": 0,
     "text": "+6 Budget. Exhaust.",
+    "flavorText": "Passed in closed session at three in the morning. No vote was recorded.",
     "effects": [
       {
         "type": "gainBudget",
@@ -445,6 +471,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "+5 Progress.",
+    "flavorText": "She works in silence. When she speaks, the room takes notes.",
     "effects": [
       {
         "type": "addProgress",
@@ -463,6 +490,7 @@
     "rarity": "starter",
     "cost": 1,
     "text": "Fortify 3. +2 Progress.",
+    "flavorText": "\"Give me the shell's weight and I'll tell you where it lands. Give me a week and I'll tell you why.\"",
     "effects": [
       {
         "type": "fortify",
@@ -479,12 +507,13 @@
     }
   },
   {
-    "id": "prof-tomas-brecken",
-    "name": "Prof. Tomas Brecken",
+    "id": "prof-tomas-iturbe",
+    "name": "Prof. Tomás Iturbe",
     "type": "people",
     "rarity": "rare",
     "cost": 2,
     "text": "+6 Progress. Draw 1.",
+    "flavorText": "Professor Iturbe has never once been late. He does not intend to start now.",
     "effects": [
       {
         "type": "addProgress",
@@ -501,12 +530,13 @@
     }
   },
   {
-    "id": "dr-mirela-os",
-    "name": "Dr. Mirela Os",
+    "id": "dr-adaeze-okafor",
+    "name": "Dr. Adaeze Okafor",
     "type": "people",
     "rarity": "uncommon",
     "cost": 1,
     "text": "+4 Secrecy. +2 Progress.",
+    "flavorText": "Every message lies. Her job is to find out how.",
     "effects": [
       {
         "type": "protectSecrecy",
@@ -523,12 +553,13 @@
     }
   },
   {
-    "id": "dr-hana-lisovska",
-    "name": "Dr. Hana Lisovska",
+    "id": "dr-anand-varghese",
+    "name": "Dr. Anand Varghese",
     "type": "people",
     "rarity": "uncommon",
     "cost": 0,
     "text": "+3 Progress. -1 Morale.",
+    "flavorText": "\"The fume hood is a suggestion,\" he says, and is usually right.",
     "effects": [
       {
         "type": "addProgress",
@@ -545,12 +576,13 @@
     }
   },
   {
-    "id": "dr-edda-sorvik",
-    "name": "Dr. Edda Sorvik",
+    "id": "dr-yuki-tanabe",
+    "name": "Dr. Yuki Tanabe",
     "type": "people",
     "rarity": "uncommon",
     "cost": 1,
     "text": "+3 Morale. Rest all scientists 1.",
+    "flavorText": "Sleep. Eat. Then you may go back to saving the world.",
     "effects": [
       {
         "type": "gainMorale",
@@ -573,6 +605,7 @@
     "rarity": "special",
     "cost": 1,
     "text": "While in hand at end of turn: -1 Secrecy. Play to root it out (Exhaust).",
+    "flavorText": "Someone in Building Four is reading over your shoulder.",
     "effects": [],
     "exhaust": true,
     "inHandAtEndOfTurn": [

@@ -39,6 +39,7 @@ export const CardSchema: z.ZodType<CardDef> = z
     rarity: z.enum(['starter', 'special', 'common', 'uncommon', 'rare']),
     cost: z.number().int().min(0).max(5),
     text: z.string().min(1),
+    flavorText: z.string().min(1).max(140).optional(),
     effects: z.array(CardEffectSchema),
     exhaust: z.boolean().optional(),
     inHandAtEndOfTurn: z.array(ThreatEffectSchema).min(1).optional(),

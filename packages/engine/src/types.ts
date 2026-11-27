@@ -48,6 +48,8 @@ export interface CardDef {
   rarity: Rarity;
   cost: number;
   text: string;
+  /** Tone per docs/WORLD.md. Shown in italics under the rules text. */
+  flavorText?: string | undefined;
   effects: CardEffect[];
   /** Removed for the run after it's played. */
   exhaust?: boolean | undefined;
@@ -134,7 +136,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 export interface GameState {
   version: number;

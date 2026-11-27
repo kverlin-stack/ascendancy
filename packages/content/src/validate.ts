@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { GameContent } from '@ascendancy/engine';
+import { interpolate, leftoverTokens } from './interpolate';
 import { CardSchema, DirectorSchema, RulesSchema, ThreatSchema } from './schemas';
 
 export interface RawContent {
@@ -16,9 +17,13 @@ export class ContentError extends Error {
   }
 }
 
-/** Validate raw data files and cross-references. Throws ContentError listing every problem. */
-export function validateContent(raw: RawContent): GameContent {
-  const problems: string[] = [];
+/**
+ * Fill in {name} tokens, then validate data files and cross-references.
+ * Throws ContentError listing every problem.
+ */
+export function validateContent(input: RawContent): GameContent {
+  const raw = interpolate(input);
+  const problems: string[] = leftoverTokens(raw);
   const parse = <T>(label: string, schema: z.ZodType<T>, value: unknown): T | undefined => {
     const r = schema.safeParse(value);
     if (r.success) return r.data;

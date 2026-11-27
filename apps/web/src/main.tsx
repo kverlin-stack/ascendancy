@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { ErrorBoundary } from './ErrorBoundary';
 import './styles.css';
+import { S } from './strings';
+
+document.title = S.title;
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

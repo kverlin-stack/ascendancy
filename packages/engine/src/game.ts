@@ -189,7 +189,7 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   }
   if (s.resources.progress >= content.rules.progressGoal) {
     s.phase = 'won';
-    s.log.push(`T${s.turn}: Project Sunfire complete`);
+    s.log.push(`T${s.turn}: Progress goal reached`);
   }
   s.rngState = rng.state;
   return s;

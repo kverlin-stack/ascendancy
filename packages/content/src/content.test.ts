@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, newGame } from '@ascendancy/engine';
-import { content, ContentError, rawContent, validateContent } from './index';
+import { content, ContentError, NAMES, rawContent, validateContent } from './index';
 
 describe('content', () => {
   it('the shipped data files are valid', () => {
@@ -43,6 +43,28 @@ describe('content', () => {
   it('rejects bad field values with a readable path', () => {
     const cards = (rawContent.cards as object[]).map((c, i) => (i === 0 ? { ...c, cost: -1 } : c));
     expect(() => validateContent({ ...rawContent, cards })).toThrow(/cards\.0\.cost/);
+  });
+
+  it('fills in {name} tokens from names.ts and rejects unknown ones', () => {
+    const cards = (rawContent.cards as object[]).map((c, i) =>
+      i === 0 ? { ...c, text: 'Hold back the {enemyShort}.' } : c,
+    );
+    expect(validateContent({ ...rawContent, cards }).cards[0]!.text).toBe(
+      `Hold back the ${NAMES.enemyShort}.`,
+    );
+    const bad = (rawContent.cards as object[]).map((c, i) =>
+      i === 0 ? { ...c, text: '{nope}' } : c,
+    );
+    expect(() => validateContent({ ...rawContent, cards: bad })).toThrow(
+      /unknown name token \{nope\}/,
+    );
+  });
+
+  it('no shipped string contains a hard-coded working name', () => {
+    const text = JSON.stringify(rawContent);
+    for (const name of ['Concord', 'Directorate', 'Sunfire', 'World Assembly', 'Meridian']) {
+      expect(text, `use a {token} instead of "${name}"`).not.toContain(name);
+    }
   });
 
   it('a game can start and run a turn with the real content', () => {
