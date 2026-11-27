@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Format
+        run: pnpm format:check
+      - name: Validate content
+        run: pnpm validate
+      - name: Tests
+        run: pnpm test
+      - name: Sim smoke test (100 runs)
+        run: pnpm --silent sim --runs 100 --seed 1 --min-win-rate 0.05
+      - name: Build web
+        run: pnpm build:web
