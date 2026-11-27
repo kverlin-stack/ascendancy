@@ -27,6 +27,16 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
     },
     cards: [
       {
+        id: 'medic',
+        name: 'Medic',
+        type: 'people',
+        rarity: 'starter',
+        cost: 0,
+        text: '',
+        effects: [{ type: 'restScientists', amount: 1 }],
+        scientist: { burnoutLimit: 3, role: 'test' },
+      },
+      {
         id: 'peek',
         name: 'Peek',
         type: 'security',

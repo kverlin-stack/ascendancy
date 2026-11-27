@@ -732,6 +732,144 @@ describe('intel and counter-orders', () => {
   });
 });
 
+describe('review fixes', () => {
+  it('a scientist who rests others does not rest themselves', () => {
+    const s0 = withHand(newGame(content, 1), ['medic']);
+    s0.burnout = { 1000: 1, 5: 2 };
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    expect(s1.burnout[1000]).toBe(2);
+    expect(s1.burnout[5]).toBe(1);
+  });
+
+  it('a scientist played this turn does not rest even if drawn back into hand', () => {
+    const s0 = withHand(newGame(content, 1), ['vet']);
+    const s1 = applyAction(s0, { type: 'playCard', uid: 1000 }, content);
+    const back = {
+      ...s1,
+      hand: [{ uid: 1000, cardId: 'vet' }],
+      discard: s1.discard.filter((c) => c.uid !== 1000),
+    };
+    expect(applyAction(back, { type: 'endTurn' }, content).burnout[1000]).toBe(1);
+  });
+
+  it('quarter-end Facility effects apply only if you survive, and cannot drop a resource to 0', () => {
+    const c = testContent({
+      threats: [
+        {
+          id: 'hit',
+          name: 'Hit',
+          text: '',
+          copies: 1,
+          fromQuarter: 1,
+          effects: [{ type: 'loseBudget', amount: 5 }],
+        },
+      ],
+    });
+    const lost = applyAction(
+      { ...newGame(c, 1), turn: 3, facilities: ['bonds-office'] },
+      { type: 'endTurn' },
+      c,
+    );
+    expect(lost.phase).toBe('lost');
+
+    const c2 = testContent();
+    c2.facilities = [
+      {
+        id: 'drain',
+        name: 'Drain',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'onQuarterEnd', effects: [{ type: 'gainBudget', amount: -9 }] }],
+      },
+    ];
+    const s = applyAction(
+      { ...newGame(c2, 1), turn: 3, facilities: ['drain'] },
+      { type: 'endTurn' },
+      c2,
+    );
+    expect(s.phase).not.toBe('lost');
+    expect(s.resources.budget).toBe(1);
+  });
+
+  it('a new quarter keeps the enemy deck order and never jumps ahead of orders already seen', () => {
+    const t = (id: string, copies: number, fromQuarter: number) => ({
+      id,
+      name: id,
+      text: '',
+      copies,
+      fromQuarter,
+      effects: [],
+    });
+    const c = testContent({ threats: [t('a', 3, 1), t('b', 3, 1), t('late', 2, 2)] });
+    c.facilities = [
+      {
+        id: 'cipher',
+        name: 'Cipher',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'intel', amount: 2 }],
+      },
+    ];
+    for (let seed = 0; seed < 25; seed++) {
+      let s: GameState = { ...newGame(c, seed), facilities: ['cipher'] };
+      s = applyAction(s, { type: 'endTurn' }, c);
+      s = applyAction(s, { type: 'endTurn' }, c); // now turn 3, quarter end next
+      const seen = upcomingThreats(s, c);
+      const oldOrder = s.enemyDeck.slice();
+      s = skipReward(applyAction(s, { type: 'endTurn' }, c), c);
+      expect(s.threatId).toBe(seen[0]);
+      expect(s.enemyDeck[s.enemyDeck.length - 1]).toBe(seen[1]);
+      expect(s.enemyDeck.filter((id) => id !== 'late')).toEqual(oldOrder.slice(0, -1));
+      expect(s.enemyDeck.filter((id) => id === 'late')).toHaveLength(2);
+    }
+  });
+
+  it('delaying an order with an empty enemy deck does not duplicate it', () => {
+    const t = (id: string) => ({ id, name: id, text: '', copies: 1, fromQuarter: 1, effects: [] });
+    const c = testContent({ threats: [t('a'), t('b'), t('c')] });
+    const s0 = withHand(newGame(c, 1), ['stall']);
+    const current = s0.threatId;
+    const s1 = applyAction({ ...s0, enemyDeck: [] }, { type: 'playCard', uid: 1000 }, c);
+    expect(s1.threatId).not.toBe(current);
+    expect([s1.threatId, ...s1.enemyDeck].sort()).toEqual(['a', 'b', 'c']);
+    expect(s1.enemyDeck[0]).toBe(current);
+  });
+
+  it('a win from a Facility effect is detected', () => {
+    const c = testContent();
+    c.facilities = [
+      {
+        id: 'lab',
+        name: 'Lab',
+        rarity: 'common',
+        text: '',
+        rules: [{ type: 'onTurnStart', effects: [{ type: 'addProgress', amount: 1 }] }],
+      },
+    ];
+    const s0 = { ...newGame(c, 1), facilities: ['lab'] };
+    s0.resources.progress = 9;
+    expect(applyAction(s0, { type: 'endTurn' }, c).phase).toBe('won');
+  });
+
+  it('whyCantPlay counts first-of-type rule costs', () => {
+    const c = testContent();
+    c.directors = [
+      {
+        ...c.directors[0]!,
+        rules: [
+          {
+            type: 'onFirstPlayOfType',
+            cardType: 'research',
+            effects: [{ type: 'gainBudget', amount: -5 }],
+          },
+        ],
+      },
+    ];
+    const s0 = withHand(newGame(c, 1), ['lab']);
+    expect(whyCantPlay(s0, 1000, c)).toBe('budget');
+  });
+});
+
 describe('replays', () => {
   it('the same seed and actions always produce the same run', () => {
     const play = (): GameState => {

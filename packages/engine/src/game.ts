@@ -59,6 +59,7 @@ export function newGame(
     effort: 0,
     maxEffort: 0,
     fortify: 0,
+    playedThisTurn: [],
     typesPlayedThisTurn: [],
     facilities: [],
     resources: {
@@ -234,7 +235,12 @@ export function whyCantPlay(
   let budget = 0;
   let morale = 0;
   let secrecy = 0;
-  for (const e of effectsOf(state, content, uid, card)) {
+  const firstOfType = state.typesPlayedThisTurn.includes(card.type)
+    ? []
+    : activeRules(state, content).flatMap((r) =>
+        r.type === 'onFirstPlayOfType' && r.cardType === card.type ? r.effects : [],
+      );
+  for (const e of [...effectsOf(state, content, uid, card), ...firstOfType]) {
     if (e.type === 'gainBudget') budget += e.amount;
     if (e.type === 'gainMorale') morale += e.amount;
     if (e.type === 'protectSecrecy') secrecy += e.amount;
@@ -264,8 +270,9 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   const [inst] = s.hand.splice(idx, 1) as [CardInstance];
   const card = getCard(content, inst.cardId);
   s.effort -= costOf(state, content, uid, card);
+  s.playedThisTurn.push(uid);
   for (const effect of effectsOf(state, content, uid, card))
-    applyCardEffect(s, effect, content, rng);
+    applyCardEffect(s, effect, content, rng, uid);
   if (!s.typesPlayedThisTurn.includes(card.type)) {
     for (const r of activeRules(s, content)) {
       if (r.type === 'onFirstPlayOfType' && r.cardType === card.type) {
@@ -293,10 +300,7 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   } else {
     s.discard.push(inst);
   }
-  if (s.resources.progress >= content.rules.progressGoal) {
-    s.phase = 'won';
-    s.log.push(`T${s.turn}: Progress goal reached`);
-  }
+  checkWin(s, content);
   s.rngState = rng.state;
   return s;
 }
@@ -323,9 +327,6 @@ function endTurn(state: GameState, content: GameContent): GameState {
     s.log.push(
       `T${s.turn}: quarterly advance ${adv}, war weariness -${rules.quarterlyMoraleLoss} Morale`,
     );
-    for (const r of activeRules(s, content)) {
-      if (r.type === 'onQuarterEnd') for (const e of r.effects) applyCardEffect(s, e, content, rng);
-    }
   }
 
   // 3. Curses still in hand (e.g. a Mole) take effect.
@@ -348,11 +349,22 @@ function endTurn(state: GameState, content: GameContent): GameState {
     return s;
   }
 
-  // 5. Fortify expires. Scientists left unplayed in hand rest, then discard.
+  // 5. You survived the quarter: Director and Facility quarter-end effects apply.
+  if (isQuarterEnd(s.turn, rules)) {
+    for (const r of activeRules(s, content)) {
+      if (r.type === 'onQuarterEnd') applyRuleEffects(s, r.effects, content, rng);
+    }
+    if (checkWin(s, content)) {
+      s.rngState = rng.state;
+      return s;
+    }
+  }
+
+  // 6. Fortify expires. Scientists in hand who were not played this turn rest, then discard.
   s.fortify = 0;
   for (const inst of s.hand) {
     const before = s.burnout[inst.uid];
-    if (before === undefined) continue;
+    if (before === undefined || s.playedThisTurn.includes(inst.uid)) continue;
     rest(s, content, inst.uid, 1);
     if (s.burnout[inst.uid] === before) continue;
     s.log.push(
@@ -362,7 +374,7 @@ function endTurn(state: GameState, content: GameContent): GameState {
   s.discard.push(...s.hand);
   s.hand = [];
 
-  // 6. After a quarter, offer a card (or Facility) pick before the next turn starts.
+  // 7. After a quarter, offer a card (or Facility) pick before the next turn starts.
   if (isQuarterEnd(s.turn, rules)) {
     const facilityPick = rules.reward.facilityQuarters.includes(runQuarterOf(s.turn, rules));
     s.rewardKind = facilityPick ? 'facility' : 'card';
@@ -381,23 +393,58 @@ function endTurn(state: GameState, content: GameContent): GameState {
 }
 
 function startNextTurn(s: GameState, content: GameContent, rng: Rng): void {
+  // Orders the player has already been shown (Intel) must still arrive in that order.
+  const seen = s.turn > 0 ? intelOf(s, content) : 0;
   s.turn += 1;
+  s.playedThisTurn = [];
   s.typesPlayedThisTurn = [];
   s.threatCancelled = false;
   s.intelThisTurn = 0;
   s.effort = s.maxEffort = effortForTurn(s, content);
   drawCards(s, handSizeForTurn(s, content), rng);
-  for (const r of activeRules(s, content)) {
-    if (r.type === 'onTurnStart') for (const e of r.effects) applyCardEffect(s, e, content, rng);
-  }
-  // A new quarter shuffles newly unlocked enemy actions into the rest of the enemy deck.
+  // A new quarter slips newly unlocked orders into the enemy deck at random depths, below
+  // anything already seen. The existing order is kept, so delayed orders stay delayed.
+  // (If the deck is empty, the next draw reshuffles everything unlocked, new orders included.)
   const rules = content.rules;
-  if ((s.turn - 1) % rules.turnsPerQuarter === 0) {
+  if ((s.turn - 1) % rules.turnsPerQuarter === 0 && s.enemyDeck.length > 0) {
     const q = runQuarterOf(s.turn, rules);
     const added = content.threats.filter((t) => t.fromQuarter === q).flatMap((t) => copiesOf(t));
-    if (added.length > 0) s.enemyDeck = rng.shuffle([...s.enemyDeck, ...added]);
+    for (const id of added) {
+      const maxIndex = Math.max(0, s.enemyDeck.length - seen);
+      s.enemyDeck.splice(rng.int(maxIndex + 1), 0, id);
+    }
   }
   s.threatId = drawThreat(s, content, rng);
+  for (const r of activeRules(s, content)) {
+    if (r.type === 'onTurnStart') applyRuleEffects(s, r.effects, content, rng);
+  }
+  checkWin(s, content);
+}
+
+/** Win the moment Progress reaches the goal. Returns true if the run is won. */
+function checkWin(s: GameState, content: GameContent): boolean {
+  if (s.phase === 'won') return true;
+  if (s.resources.progress < content.rules.progressGoal) return false;
+  s.phase = 'won';
+  s.log.push(`T${s.turn}: Progress goal reached`);
+  return true;
+}
+
+/**
+ * Apply a Director or Facility rule's effects. Like cards, rules can't make you
+ * lose by themselves: a cost never takes Budget, Morale or Secrecy below 1.
+ */
+function applyRuleEffects(
+  s: GameState,
+  effects: CardEffect[],
+  content: GameContent,
+  rng: Rng,
+): void {
+  const before = { ...s.resources };
+  for (const e of effects) applyCardEffect(s, e, content, rng);
+  for (const key of ['budget', 'morale', 'secrecy'] as const) {
+    if (before[key] >= 1 && s.resources[key] < 1) s.resources[key] = 1;
+  }
 }
 
 function copiesOf(t: ThreatDef): string[] {
@@ -474,7 +521,14 @@ export function lossCause(s: GameState): LossCause | null {
   return null;
 }
 
-function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng: Rng): void {
+function applyCardEffect(
+  s: GameState,
+  e: CardEffect,
+  content: GameContent,
+  rng: Rng,
+  /** The card being played, if any. It is not affected by its own restScientists. */
+  sourceUid?: number,
+): void {
   const r = s.resources;
   const { rules } = content;
   switch (e.type) {
@@ -505,6 +559,14 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
     case 'delayThreat': {
       // Draw the next order first, so a delayed order can't come straight back.
       const delayed = s.threatId;
+      if (s.enemyDeck.length === 0) {
+        // Start the next cycle now, without the delayed order's own copy (it goes to the bottom).
+        const fresh = eligibleThreats(content, runQuarterOf(s.turn, content.rules));
+        const own = fresh.indexOf(delayed);
+        if (own >= 0) fresh.splice(own, 1);
+        if (fresh.length === 0) return; // nothing else to bring forward
+        s.enemyDeck = rng.shuffle(fresh);
+      }
       s.threatId = drawThreat(s, content, rng);
       s.enemyDeck.unshift(delayed);
       s.threatCancelled = false;
@@ -514,7 +576,9 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
       s.threatCancelled = true;
       return;
     case 'restScientists':
-      for (const uid of Object.keys(s.burnout)) rest(s, content, Number(uid), e.amount);
+      for (const uid of Object.keys(s.burnout)) {
+        if (Number(uid) !== sourceUid) rest(s, content, Number(uid), e.amount);
+      }
       return;
   }
 }
@@ -626,6 +690,7 @@ export function cloneState(s: GameState): GameState {
     hand: s.hand.slice(),
     discard: s.discard.slice(),
     rewardOptions: s.rewardOptions.slice(),
+    playedThisTurn: s.playedThisTurn.slice(),
     typesPlayedThisTurn: s.typesPlayedThisTurn.slice(),
     facilities: s.facilities.slice(),
     enemyDeck: s.enemyDeck.slice(),

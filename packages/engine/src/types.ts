@@ -211,7 +211,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 11;
+export const STATE_VERSION = 12;
 
 export interface GameState {
   version: number;
@@ -227,6 +227,8 @@ export interface GameState {
   maxEffort: number;
   /** Front loss blocked for the rest of this turn. */
   fortify: number;
+  /** Card instances played so far this turn. A scientist played this turn does not rest. */
+  playedThisTurn: number[];
   /** Card types played so far this turn (for first-of-type rules). */
   typesPlayedThisTurn: CardType[];
   /** Facilities owned, in the order they were gained. */
