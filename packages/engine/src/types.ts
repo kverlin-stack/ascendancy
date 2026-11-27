@@ -89,6 +89,8 @@ export interface Rules {
   quarterlyMoraleLoss: number;
   /** Morale lost when a scientist burns out. */
   burnoutMoraleLoss: number;
+  /** A scientist earns a merit after this many plays, and a strain when played at this Burnout or more. */
+  traits: { meritAfterPlays: number; strainAtBurnout: number };
   /** Picks offered between quarters. */
   reward: {
     choices: number;
@@ -130,6 +132,26 @@ export type RunRule =
 /** @deprecated alias kept for readability in director data. */
 export type DirectorRule = RunRule;
 
+/** Per-scientist rules from a trait. */
+export type TraitRule =
+  /** Extra card effects each time this scientist is played. */
+  | { type: 'onPlay'; effects: CardEffect[] }
+  /** Changes this scientist's Effort cost (never below 0). */
+  | { type: 'costDelta'; amount: number }
+  /** Changes this scientist's Burnout limit. */
+  | { type: 'burnoutLimit'; amount: number }
+  /** This scientist never rests. */
+  | { type: 'noRest' };
+
+/** Merits are earned by surviving plays; strains by working while tired. */
+export interface TraitDef {
+  id: string;
+  name: string;
+  kind: 'merit' | 'strain';
+  text: string;
+  rules: TraitRule[];
+}
+
 export interface FacilityDef {
   id: string;
   name: string;
@@ -156,6 +178,12 @@ export interface GameContent {
   threats: ThreatDef[];
   directors: DirectorDef[];
   facilities: FacilityDef[];
+  traits: TraitDef[];
+}
+
+export interface ScientistRecord {
+  plays: number;
+  traits: string[];
 }
 
 export interface CardInstance {
@@ -177,7 +205,7 @@ export interface Resources {
 }
 
 /** Bump whenever GameState's shape changes, so old saves are dropped instead of misread. */
-export const STATE_VERSION = 9;
+export const STATE_VERSION = 10;
 
 export interface GameState {
   version: number;
@@ -209,6 +237,8 @@ export interface GameState {
   lost: CardInstance[];
   /** Burnout per scientist card instance, keyed by uid. */
   burnout: Record<string, number>;
+  /** Plays and traits per scientist card instance, keyed by uid. */
+  scientists: Record<string, ScientistRecord>;
   /** The telegraphed enemy action that resolves when this turn ends. */
   threatId: string;
   /** Enemy actions still to come before the enemy deck reshuffles. */

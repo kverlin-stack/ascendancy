@@ -318,3 +318,57 @@
   text-align: center;
   min-height: calc(var(--cw) * 0.24);
 }
+
+/* Trait chips: merits in green ink, strains in red. */
+.card-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cw) * 0.015);
+  padding: 0 calc(var(--cw) * 0.045) calc(var(--cw) * 0.02);
+  margin-top: auto;
+}
+.card-traits + .card-burnout {
+  margin-top: 0;
+}
+.trait {
+  font-size: calc(var(--cw) * 0.052);
+  line-height: 1.2;
+  padding: calc(var(--cw) * 0.006) calc(var(--cw) * 0.02);
+  border-radius: calc(var(--cw) * 0.012);
+  border: calc(var(--cw) * 0.008) solid currentColor;
+}
+.trait strong {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.trait-merit {
+  color: var(--held);
+}
+.trait-strain {
+  color: var(--red);
+}
+.card.size-hand .trait {
+  font-size: calc(var(--cw) * 0.068);
+}
+.card-cost.is-changed {
+  background: var(--ink);
+}
+
+/* Scientists carry more text: shorter art, and a narrower full-size card so Play stays clear. */
+.card.is-scientist .card-art {
+  aspect-ratio: 120 / 62;
+}
+.card.size-full.is-scientist {
+  --cw: min(70vw, 240px, calc((100dvh - var(--hand-h) - var(--bar-h) - 120px) / 1.7));
+}
+.card.size-full.is-scientist .card-art {
+  aspect-ratio: 120 / 58;
+}
+.card.size-hand.is-scientist .card-typeline {
+  display: none;
+}
+.card.size-hand.is-scientist .card-rules {
+  padding-top: calc(var(--cw) * 0.03);
+  -webkit-line-clamp: 3;
+}

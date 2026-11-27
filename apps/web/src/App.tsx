@@ -3,12 +3,14 @@ import {
   advanceFor,
   applyAction,
   burnoutLimitOf,
+  costOf,
   getCard,
   getDirector,
   getFacility,
   getThreat,
   newGame,
   quarterOf,
+  traitsOf,
   turnsUntilAdvance,
   whyCantPlay,
   yearOf,
@@ -57,7 +59,7 @@ export function App() {
   const play = (uid: number) => {
     const inst = state.hand.find((c) => c.uid === uid);
     if (!inst || whyCantPlay(state, uid, content)) return;
-    setFlying({ key: Date.now(), card: getCard(content, inst.cardId) });
+    setFlying({ key: uid, card: getCard(content, inst.cardId) });
     setSelected(null);
     act({ type: 'playCard', uid });
   };
@@ -194,10 +196,12 @@ export function App() {
                 selCard.scientist
                   ? {
                       used: state.burnout[selInst.uid] ?? 0,
-                      limit: burnoutLimitOf(state, content, selCard),
+                      limit: burnoutLimitOf(state, content, selCard, selInst.uid),
                     }
                   : undefined
               }
+              cost={costOf(state, content, selInst.uid, selCard)}
+              traits={traitsOf(state, content, selInst.uid)}
               onClick={() => setSelected(null)}
             />
             <button
@@ -205,7 +209,9 @@ export function App() {
               disabled={!!selReason}
               onClick={() => play(selInst.uid)}
             >
-              {selReason ? BLOCKED[selReason] : `${S.play} · ${selCard.cost} ${S.effortLabel}`}
+              {selReason
+                ? BLOCKED[selReason]
+                : `${S.play} · ${costOf(state, content, selInst.uid, selCard)} ${S.effortLabel}`}
             </button>
           </div>
         </div>

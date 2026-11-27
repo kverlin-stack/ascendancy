@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import {
   burnoutLimitOf,
+  costOf,
   getCard,
+  traitsOf,
   whyCantPlay,
   type GameContent,
   type GameState,
@@ -63,10 +65,12 @@ export function Hand({ state, content, selected, onSelect }: Props) {
               card.scientist
                 ? {
                     used: state.burnout[inst.uid] ?? 0,
-                    limit: burnoutLimitOf(state, content, card),
+                    limit: burnoutLimitOf(state, content, card, inst.uid),
                   }
                 : undefined
             }
+            cost={costOf(state, content, inst.uid, card)}
+            traits={traitsOf(state, content, inst.uid)}
             onClick={() => onSelect(inst.uid)}
             style={{
               position: 'absolute',

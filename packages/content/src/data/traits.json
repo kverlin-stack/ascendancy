@@ -1,0 +1,131 @@
+[
+  {
+    "id": "seasoned",
+    "name": "Seasoned",
+    "kind": "merit",
+    "text": "+1 Progress when played.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "addProgress",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "steady",
+    "name": "Steady",
+    "kind": "merit",
+    "text": "Can be played 1 more time before burning out.",
+    "rules": [
+      {
+        "type": "burnoutLimit",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "quick-study",
+    "name": "Quick Study",
+    "kind": "merit",
+    "text": "Draw 1 when played.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "drawCards",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "inspiring",
+    "name": "Inspiring",
+    "kind": "merit",
+    "text": "+1 Morale when played.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "gainMorale",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "obsessed",
+    "name": "Obsessed",
+    "kind": "strain",
+    "text": "+2 Progress when played. Never rests.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "addProgress",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "type": "noRest"
+      }
+    ]
+  },
+  {
+    "id": "frayed",
+    "name": "Frayed",
+    "kind": "strain",
+    "text": "-1 Morale when played.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "gainMorale",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "careless",
+    "name": "Careless",
+    "kind": "strain",
+    "text": "-1 Secrecy when played.",
+    "rules": [
+      {
+        "type": "onPlay",
+        "effects": [
+          {
+            "type": "protectSecrecy",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "worn-down",
+    "name": "Worn Down",
+    "kind": "strain",
+    "text": "Costs 1 more Effort.",
+    "rules": [
+      {
+        "type": "costDelta",
+        "amount": 1
+      }
+    ]
+  }
+]

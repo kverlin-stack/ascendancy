@@ -1,7 +1,14 @@
 import { z } from 'zod';
 import type { GameContent } from '@ascendancy/engine';
 import { interpolate, leftoverTokens } from './interpolate';
-import { CardSchema, DirectorSchema, FacilitySchema, RulesSchema, ThreatSchema } from './schemas';
+import {
+  CardSchema,
+  DirectorSchema,
+  FacilitySchema,
+  RulesSchema,
+  ThreatSchema,
+  TraitSchema,
+} from './schemas';
 
 export interface RawContent {
   rules: unknown;
@@ -9,6 +16,7 @@ export interface RawContent {
   threats: unknown;
   directors: unknown;
   facilities: unknown;
+  traits: unknown;
 }
 
 export class ContentError extends Error {
@@ -100,10 +108,16 @@ export function validateContent(input: RawContent): GameContent {
     }
   }
 
-  if (problems.length > 0 || !rules || !cards || !threats || !directors || !facilities) {
+  const traits = parse('traits', z.array(TraitSchema), raw.traits);
+  if (traits) {
+    for (const dup of duplicates(traits.map((t) => t.id)))
+      problems.push(`traits: duplicate id "${dup}"`);
+  }
+
+  if (problems.length > 0 || !rules || !cards || !threats || !directors || !facilities || !traits) {
     throw new ContentError(problems);
   }
-  return { rules, cards, threats, directors, facilities };
+  return { rules, cards, threats, directors, facilities, traits };
 }
 
 function duplicates(ids: string[]): string[] {

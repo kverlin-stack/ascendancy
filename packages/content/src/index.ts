@@ -4,13 +4,14 @@ import rules from './data/rules.json';
 import directors from './data/directors.json';
 import facilities from './data/facilities.json';
 import threats from './data/threats.json';
+import traits from './data/traits.json';
 import { validateContent, type RawContent } from './validate';
 
 export * from './names';
 export * from './schemas';
 export * from './validate';
 
-export const rawContent: RawContent = { rules, cards, threats, directors, facilities };
+export const rawContent: RawContent = { rules, cards, threats, directors, facilities, traits };
 
 /** The validated Act I content. Throws at import time if any data file is invalid. */
 export const content: GameContent = validateContent(rawContent);

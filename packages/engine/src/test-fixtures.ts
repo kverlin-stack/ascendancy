@@ -14,6 +14,7 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
       morale: { high: 8, highDrawBonus: 1, low: 2, lowEffortPenalty: 1 },
       quarterlyMoraleLoss: 0,
       burnoutMoraleLoss: 2,
+      traits: { meritAfterPlays: 2, strainAtBurnout: 2 },
       reward: {
         choices: 3,
         weights: { common: 6, uncommon: 3, rare: 1 },
@@ -82,6 +83,16 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
         text: '',
         effects: [{ type: 'addProgress', amount: 3 }],
         scientist: { burnoutLimit: 2, role: 'test' },
+      },
+      {
+        id: 'vet',
+        name: 'Vet',
+        type: 'people',
+        rarity: 'starter',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'addProgress', amount: 1 }],
+        scientist: { burnoutLimit: 5, role: 'test' },
       },
       {
         id: 'leave',
@@ -216,6 +227,25 @@ export function testContent(overrides: Partial<GameContent> = {}): GameContent {
         rarity: 'common',
         text: '',
         rules: [{ type: 'reduceThreat', effect: 'loseBudget', amount: 1 }],
+      },
+    ],
+    traits: [
+      {
+        id: 'seasoned',
+        name: 'Seasoned',
+        kind: 'merit',
+        text: '',
+        rules: [{ type: 'onPlay', effects: [{ type: 'addProgress', amount: 1 }] }],
+      },
+      {
+        id: 'obsessed',
+        name: 'Obsessed',
+        kind: 'strain',
+        text: '',
+        rules: [
+          { type: 'onPlay', effects: [{ type: 'addProgress', amount: 2 }] },
+          { type: 'noRest' },
+        ],
       },
     ],
     directors: [

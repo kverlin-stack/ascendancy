@@ -14,6 +14,10 @@
   },
   "quarterlyMoraleLoss": 2,
   "burnoutMoraleLoss": 2,
+  "traits": {
+    "meritAfterPlays": 3,
+    "strainAtBurnout": 2
+  },
   "reward": {
     "choices": 3,
     "weights": {

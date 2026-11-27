@@ -6,6 +6,7 @@ import type {
   Rules,
   RunRule,
   ThreatDef,
+  TraitDef,
 } from '@ascendancy/engine';
 
 const id = z
@@ -97,6 +98,7 @@ export const RulesSchema: z.ZodType<Rules> = z
       .strict(),
     quarterlyMoraleLoss: z.number().int().min(0),
     burnoutMoraleLoss: z.number().int().min(0),
+    traits: z.object({ meritAfterPlays: positive, strainAtBurnout: positive }).strict(),
     reward: z
       .object({
         choices: positive,
@@ -140,6 +142,27 @@ export const RunRuleSchema: z.ZodType<RunRule> = z.discriminatedUnion('type', [
     .strict(),
   effect('intel', positive),
 ]);
+
+export const TraitSchema: z.ZodType<TraitDef> = z
+  .object({
+    id,
+    name: z.string().min(1),
+    kind: z.enum(['merit', 'strain']),
+    text: z.string().min(1),
+    rules: z
+      .array(
+        z.discriminatedUnion('type', [
+          z
+            .object({ type: z.literal('onPlay'), effects: z.array(CardEffectSchema).min(1) })
+            .strict(),
+          effect('costDelta', amount),
+          effect('burnoutLimit', amount),
+          z.object({ type: z.literal('noRest') }).strict(),
+        ]),
+      )
+      .min(1),
+  })
+  .strict();
 
 export const FacilitySchema: z.ZodType<FacilityDef> = z
   .object({

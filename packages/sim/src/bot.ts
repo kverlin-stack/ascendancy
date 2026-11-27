@@ -117,7 +117,7 @@ export const greedyBot: Bot = {
       for (const e of card.effects) if (e.type === 'drawCards') gain += DRAW_VALUE * e.amount;
       if (
         card.scientist &&
-        (state.burnout[inst.uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card)
+        (state.burnout[inst.uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card, inst.uid)
       ) {
         gain -= BURNOUT_PENALTY;
       }

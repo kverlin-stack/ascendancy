@@ -4,8 +4,11 @@ import {
   burnoutLimitOf,
   canPlay,
   cloneState,
+  costOf,
+  effectsOf,
   getCard,
   newGame,
+  traitsOf,
   whyCantPlay,
 } from './game';
 import { testContent } from './test-fixtures';
@@ -589,6 +592,73 @@ describe('facilities', () => {
     expect(s1.rewardKind).toBe('facility');
     expect(s1.rewardOptions).toHaveLength(2);
     expect(s1.rewardOptions).not.toContain('radar');
+  });
+});
+
+describe('scientist traits', () => {
+  const playVet = (s: GameState): GameState =>
+    applyAction({ ...withHand(s, ['vet']), effort: 3 }, { type: 'playCard', uid: 1000 }, content);
+  const keep = (s: GameState): GameState => ({
+    ...s,
+    hand: [],
+    discard: s.discard.filter((c) => c.uid !== 1000),
+  });
+
+  it('earns a merit after enough plays, and its onPlay effect then applies', () => {
+    let s = playVet(newGame(content, 1));
+    expect(s.scientists[1000]).toEqual({ plays: 1, traits: [] });
+    s.burnout = {};
+    s = playVet(keep(s));
+    expect(s.scientists[1000]?.traits).toEqual(['seasoned']);
+    const before = s.resources.progress;
+    s.burnout = {};
+    s = playVet(keep(s));
+    expect(s.resources.progress).toBe(before + 2); // 1 base + 1 Seasoned
+    expect(s.scientists[1000]?.traits).toEqual(['seasoned']); // never a second merit
+  });
+
+  it('gains a strain when played while tired; Obsessed adds Progress but never rests', () => {
+    let s = withHand(newGame(content, 1), ['vet']);
+    s.burnout = { 1000: 1 };
+    s = applyAction(s, { type: 'playCard', uid: 1000 }, content); // Burnout 2 = strain threshold
+    expect(s.scientists[1000]?.traits).toContain('obsessed');
+    expect(traitsOf(s, content, 1000).map((t) => t.kind)).toContain('strain');
+    // back in hand, unplayed: an Obsessed scientist does not rest
+    const s2 = applyAction(
+      { ...keep(s), hand: [{ uid: 1000, cardId: 'vet' }] },
+      { type: 'endTurn' },
+      content,
+    );
+    expect(s2.burnout[1000]).toBe(2);
+  });
+
+  it('traits belong to one copy, not the card', () => {
+    const s = playVet(playVet(newGame(content, 1)));
+    expect(s.scientists[1000]?.traits.length).toBeGreaterThan(0);
+    expect(effectsOf(s, content, 1000, getCard(content, 'vet')).length).toBeGreaterThan(1);
+    expect(effectsOf(s, content, 4242, getCard(content, 'vet'))).toHaveLength(1);
+  });
+
+  it('costDelta and burnoutLimit trait rules change that copy only', () => {
+    const c = testContent();
+    c.traits = [
+      {
+        id: 'quick',
+        name: 'Quick',
+        kind: 'merit',
+        text: '',
+        rules: [
+          { type: 'costDelta', amount: -1 },
+          { type: 'burnoutLimit', amount: 1 },
+        ],
+      },
+    ];
+    const s = { ...newGame(c, 1), scientists: { 7: { plays: 3, traits: ['quick'] } } };
+    const vet = getCard(c, 'vet');
+    expect(costOf(s, c, 7, vet)).toBe(0);
+    expect(costOf(s, c, 8, vet)).toBe(1);
+    expect(burnoutLimitOf(s, c, vet, 7)).toBe(6);
+    expect(burnoutLimitOf(s, c, vet, 8)).toBe(5);
   });
 });
 

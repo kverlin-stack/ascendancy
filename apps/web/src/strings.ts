@@ -58,6 +58,8 @@ export const S = {
     'If the Front, Secrecy, Budget or Morale hits 0, you lose.',
     'Morale 8+ draws an extra card each turn. Morale 3 or less costs 1 Effort.',
     'Scientists burn out: each play adds 1 Burnout, and at the limit they leave for good. Leave one unplayed in your hand and they rest 1.',
+    'Scientists change with use: after 3 plays they earn a merit, and playing one who is already tired (Burnout 2+) leaves a strain.',
+    'Facilities work for the whole run. You requisition one at the start and another mid-year.',
     'After each quarter, recruit a new card.',
   ],
   oneUse: 'ONE USE',

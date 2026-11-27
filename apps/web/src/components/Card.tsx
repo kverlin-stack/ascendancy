@@ -1,4 +1,4 @@
-import type { CardDef } from '@ascendancy/engine';
+import type { CardDef, TraitDef } from '@ascendancy/engine';
 import { Fragment, type ReactNode } from 'react';
 import { S, TYPE_LABEL } from '../strings';
 import { CardArt } from './CardArt';
@@ -10,6 +10,10 @@ interface Props {
   size: CardSize;
   /** Scientists: Burnout so far and the limit after Director rules. */
   burnout?: { used: number; limit: number } | undefined;
+  /** Effort cost after traits; defaults to the card's printed cost. */
+  cost?: number | undefined;
+  /** Traits this copy has picked up (scientists). */
+  traits?: TraitDef[] | undefined;
   /** Why it can't be played, shown as a dimmed card (hand) or a note (full). */
   blocked?: string | null | undefined;
   selected?: boolean;
@@ -35,7 +39,18 @@ function Rules({ text }: { text: string }): ReactNode {
     );
 }
 
-export function Card({ card, size, burnout, blocked, selected, onClick, style }: Props) {
+export function Card({
+  card,
+  size,
+  burnout,
+  cost,
+  traits,
+  blocked,
+  selected,
+  onClick,
+  style,
+}: Props) {
+  const shownCost = cost ?? card.cost;
   const typeLabel = card.scientist ? S.scientist : TYPE_LABEL[card.type];
   const classes = [
     'card',
@@ -53,11 +68,13 @@ export function Card({ card, size, burnout, blocked, selected, onClick, style }:
       className={classes}
       onClick={onClick}
       style={style}
-      aria-label={`${card.name}, cost ${card.cost}`}
+      aria-label={`${card.name}, cost ${shownCost}`}
     >
       <span className="card-paper grain">
         <span className="card-head">
-          <span className="card-cost">{card.cost}</span>
+          <span className={shownCost !== card.cost ? 'card-cost is-changed' : 'card-cost'}>
+            {shownCost}
+          </span>
           <span className="card-name">{card.name}</span>
         </span>
         <span className="card-art-wrap">
@@ -79,6 +96,16 @@ export function Card({ card, size, burnout, blocked, selected, onClick, style }:
         )}
         {size === 'full' && card.scientist && (
           <span className="card-role">{card.scientist.role}</span>
+        )}
+        {traits && traits.length > 0 && (
+          <span className="card-traits">
+            {traits.map((t) => (
+              <span key={t.id} className={`trait trait-${t.kind}`}>
+                <strong>{t.name}</strong>
+                {size === 'full' && <span> · {t.text}</span>}
+              </span>
+            ))}
+          </span>
         )}
         {burnout && <BurnoutRow used={burnout.used} limit={burnout.limit} size={size} />}
       </span>

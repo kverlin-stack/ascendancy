@@ -13,6 +13,8 @@ import type {
   LossCause,
   RunRule,
   ThreatDef,
+  TraitDef,
+  TraitRule,
   ThreatEffect,
 } from './types';
 
@@ -73,6 +75,7 @@ export function newGame(
     rewardOptions: [],
     lost: [],
     burnout: {},
+    scientists: {},
     threatId: '',
     enemyDeck: [],
     nextUid: deck.length + 1,
@@ -142,10 +145,52 @@ export function getFacility(content: GameContent, facilityId: string): FacilityD
   return f;
 }
 
-/** A scientist's Burnout limit after Director and Facility rules. */
-export function burnoutLimitOf(state: GameState, content: GameContent, card: CardDef): number {
+export function getTrait(content: GameContent, traitId: string): TraitDef {
+  const t = content.traits.find((x) => x.id === traitId);
+  if (!t) throw new Error(`Unknown trait: ${traitId}`);
+  return t;
+}
+
+/** Traits a card instance has picked up (scientists only). */
+export function traitsOf(state: GameState, content: GameContent, uid: number): TraitDef[] {
+  return (state.scientists[uid]?.traits ?? []).map((id) => getTrait(content, id));
+}
+
+function traitRules(state: GameState, content: GameContent, uid: number | undefined): TraitRule[] {
+  return uid === undefined ? [] : traitsOf(state, content, uid).flatMap((t) => t.rules);
+}
+
+/** A scientist's Burnout limit after Director, Facility and (if uid given) trait rules. */
+export function burnoutLimitOf(
+  state: GameState,
+  content: GameContent,
+  card: CardDef,
+  uid?: number,
+): number {
   if (!card.scientist) return Infinity;
-  return Math.max(1, card.scientist.burnoutLimit + ruleTotal(state, content, 'burnoutLimit'));
+  let limit = card.scientist.burnoutLimit + ruleTotal(state, content, 'burnoutLimit');
+  for (const r of traitRules(state, content, uid)) if (r.type === 'burnoutLimit') limit += r.amount;
+  return Math.max(1, limit);
+}
+
+/** Effort cost of a card instance after traits. */
+export function costOf(state: GameState, content: GameContent, uid: number, card: CardDef): number {
+  let cost = card.cost;
+  for (const r of traitRules(state, content, uid)) if (r.type === 'costDelta') cost += r.amount;
+  return Math.max(0, cost);
+}
+
+/** A card instance's effects, plus any trait onPlay effects. */
+export function effectsOf(
+  state: GameState,
+  content: GameContent,
+  uid: number,
+  card: CardDef,
+): CardEffect[] {
+  const extra = traitRules(state, content, uid).flatMap((r) =>
+    r.type === 'onPlay' ? r.effects : [],
+  );
+  return [...card.effects, ...extra];
 }
 
 export function getThreat(content: GameContent, threatId: string): ThreatDef {
@@ -171,18 +216,21 @@ export function whyCantPlay(
   const inst = state.hand.find((c) => c.uid === uid);
   if (!inst) return 'notInHand';
   const card = getCard(content, inst.cardId);
-  if (card.cost > state.effort) return 'effort';
+  if (costOf(state, content, uid, card) > state.effort) return 'effort';
   if (card.type === 'status' && card.effects.length === 0 && !card.exhaust) return 'unplayable';
   let budget = 0;
   let morale = 0;
   let secrecy = 0;
-  for (const e of card.effects) {
+  for (const e of effectsOf(state, content, uid, card)) {
     if (e.type === 'gainBudget') budget += e.amount;
     if (e.type === 'gainMorale') morale += e.amount;
     if (e.type === 'protectSecrecy') secrecy += e.amount;
   }
   // Burning out a scientist costs Morale too.
-  if (card.scientist && (state.burnout[uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card)) {
+  if (
+    card.scientist &&
+    (state.burnout[uid] ?? 0) + 1 >= burnoutLimitOf(state, content, card, uid)
+  ) {
     morale -= content.rules.burnoutMoraleLoss;
   }
   const r = state.resources;
@@ -202,8 +250,9 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   const idx = s.hand.findIndex((c) => c.uid === uid);
   const [inst] = s.hand.splice(idx, 1) as [CardInstance];
   const card = getCard(content, inst.cardId);
-  s.effort -= card.cost;
-  for (const effect of card.effects) applyCardEffect(s, effect, content, rng);
+  s.effort -= costOf(state, content, uid, card);
+  for (const effect of effectsOf(state, content, uid, card))
+    applyCardEffect(s, effect, content, rng);
   if (!s.typesPlayedThisTurn.includes(card.type)) {
     for (const r of activeRules(s, content)) {
       if (r.type === 'onFirstPlayOfType' && r.cardType === card.type) {
@@ -216,7 +265,7 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
   // Discard after effects, so a drawCards reshuffle can't pull the card straight back.
   if (card.scientist) {
     const b = (s.burnout[inst.uid] ?? 0) + 1;
-    if (b >= burnoutLimitOf(s, content, card)) {
+    if (b >= burnoutLimitOf(s, content, card, inst.uid)) {
       s.lost.push(inst);
       delete s.burnout[inst.uid];
       s.resources.morale = Math.max(0, s.resources.morale - content.rules.burnoutMoraleLoss);
@@ -224,6 +273,7 @@ function playCard(state: GameState, uid: number, content: GameContent): GameStat
     } else {
       s.burnout[inst.uid] = b;
       s.discard.push(inst);
+      gainTraits(s, content, inst.uid, card, b, rng);
     }
   } else if (card.exhaust) {
     s.lost.push(inst);
@@ -286,7 +336,8 @@ function endTurn(state: GameState, content: GameContent): GameState {
   for (const inst of s.hand) {
     const before = s.burnout[inst.uid];
     if (before === undefined) continue;
-    rest(s, inst.uid, 1);
+    rest(s, content, inst.uid, 1);
+    if (s.burnout[inst.uid] === before) continue;
     s.log.push(
       `T${s.turn}: ${getCard(content, inst.cardId).name} rested (Burnout ${before} → ${before - 1})`,
     );
@@ -430,7 +481,7 @@ function applyCardEffect(s: GameState, e: CardEffect, content: GameContent, rng:
       drawCards(s, e.amount, rng);
       return;
     case 'restScientists':
-      for (const uid of Object.keys(s.burnout)) rest(s, Number(uid), e.amount);
+      for (const uid of Object.keys(s.burnout)) rest(s, content, Number(uid), e.amount);
       return;
   }
 }
@@ -474,10 +525,39 @@ function applyThreatEffect(s: GameState, raw: ThreatEffect, content: GameContent
   }
 }
 
-/** Lower a scientist's Burnout (no-op for other cards). */
-function rest(s: GameState, uid: number, amount: number): void {
+/**
+ * After a scientist survives a play: a merit after enough plays, and a strain
+ * if they were worked while tired. At most one of each per scientist.
+ */
+function gainTraits(
+  s: GameState,
+  content: GameContent,
+  uid: number,
+  card: CardDef,
+  burnout: number,
+  rng: Rng,
+): void {
+  const rec = s.scientists[uid] ?? { plays: 0, traits: [] };
+  const next = { plays: rec.plays + 1, traits: rec.traits.slice() };
+  const has = (kind: TraitDef['kind']) =>
+    next.traits.some((id) => getTrait(content, id).kind === kind);
+  const gain = (kind: TraitDef['kind']) => {
+    const pool = content.traits.filter((t) => t.kind === kind);
+    if (pool.length === 0) return;
+    const t = pool[rng.int(pool.length)] as TraitDef;
+    next.traits.push(t.id);
+    s.log.push(`T${s.turn}: ${card.name} is now ${t.name}`);
+  };
+  if (next.plays >= content.rules.traits.meritAfterPlays && !has('merit')) gain('merit');
+  if (burnout >= content.rules.traits.strainAtBurnout && !has('strain')) gain('strain');
+  s.scientists[uid] = next;
+}
+
+/** Lower a scientist's Burnout (no-op for other cards, and for scientists who never rest). */
+function rest(s: GameState, content: GameContent, uid: number, amount: number): void {
   const b = s.burnout[uid];
   if (b === undefined) return;
+  if (traitRules(s, content, uid).some((r) => r.type === 'noRest')) return;
   if (b - amount <= 0) delete s.burnout[uid];
   else s.burnout[uid] = b - amount;
 }
@@ -518,6 +598,7 @@ export function cloneState(s: GameState): GameState {
     enemyDeck: s.enemyDeck.slice(),
     lost: s.lost.slice(),
     burnout: { ...s.burnout },
+    scientists: { ...s.scientists },
     log: s.log.slice(),
   };
 }
