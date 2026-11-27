@@ -26,7 +26,7 @@ export function formatReport(
   for (const [cause, n] of causes)
     lines.push(`  ${cause.padEnd(10)} ${String(n).padStart(5)}  ${pct(n, losses).padStart(6)}`);
   lines.push('');
-  lines.push('Card plays per run    in wins   in losses');
+  lines.push('Card plays per run          in wins   in losses');
   for (const card of content.cards) {
     const p = sum.cardPlays[card.id];
     if (!p) continue;
@@ -35,14 +35,14 @@ export function formatReport(
     );
   }
   lines.push('');
-  lines.push('Quarterly picks         offered  picked  win% when picked');
+  lines.push('Quarterly picks              offered  picked  win% when picked');
   for (const card of content.cards) {
     const p = sum.picks[card.id];
     if (!p) continue;
     const rate = p.offered ? pct(p.picked, p.offered) : '-';
     const win = p.picked ? pct(p.winRateWhenPicked * 100, 100) : '-';
     lines.push(
-      `  ${card.name.padEnd(24)} ${String(p.offered).padStart(5)}  ${rate.padStart(6)}  ${win.padStart(8)}`,
+      `  ${card.name.padEnd(26)} ${String(p.offered).padStart(5)}  ${rate.padStart(6)}  ${win.padStart(8)}`,
     );
   }
   if (opts.verbose) {

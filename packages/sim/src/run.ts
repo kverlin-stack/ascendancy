@@ -95,7 +95,7 @@ export function runSims(
 
   const picks: SimSummary['picks'] = {};
   for (const card of content.cards) {
-    if (card.rarity === 'starter') continue;
+    if (card.rarity === 'starter' || card.rarity === 'special') continue;
     const pickedIn = results.filter((r) => r.picked.includes(card.id));
     picks[card.id] = {
       offered: results.reduce((n, r) => n + r.offered.filter((id) => id === card.id).length, 0),

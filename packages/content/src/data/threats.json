@@ -2,13 +2,13 @@
   {
     "id": "armored-offensive",
     "name": "Armored Offensive",
-    "text": "Front advances 2. -1 Morale.",
+    "text": "Front advances 3. -1 Morale.",
     "copies": 3,
     "fromQuarter": 1,
     "effects": [
       {
         "type": "advanceFront",
-        "amount": 2
+        "amount": 3
       },
       {
         "type": "loseMorale",
@@ -19,13 +19,13 @@
   {
     "id": "spy-ring",
     "name": "Spy Ring",
-    "text": "-2 Secrecy.",
+    "text": "-3 Secrecy.",
     "copies": 2,
     "fromQuarter": 1,
     "effects": [
       {
         "type": "loseSecrecy",
-        "amount": 2
+        "amount": 3
       }
     ]
   },
@@ -72,7 +72,7 @@
     "id": "infiltrator",
     "name": "Infiltrator",
     "text": "A Mole is slipped into your deck.",
-    "copies": 1,
+    "copies": 2,
     "fromQuarter": 2,
     "effects": [
       {
@@ -107,8 +107,8 @@
     "id": "blitz",
     "name": "Blitz",
     "text": "Front advances 3.",
-    "copies": 1,
-    "fromQuarter": 3,
+    "copies": 2,
+    "fromQuarter": 2,
     "effects": [
       {
         "type": "advanceFront",

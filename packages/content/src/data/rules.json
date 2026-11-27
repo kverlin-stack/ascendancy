@@ -1,16 +1,16 @@
 {
   "handSize": 5,
   "effortPerTurn": 3,
-  "progressGoal": 75,
+  "progressGoal": 80,
   "frontTerritories": 10,
   "turnsPerQuarter": 3,
   "quartersPerYear": 4,
-  "advanceByYear": [2, 3, 4],
+  "advanceByYear": [3, 4, 5],
   "moraleEffort": {
     "high": 8,
     "low": 3
   },
-  "quarterlyMoraleLoss": 1,
+  "quarterlyMoraleLoss": 2,
   "burnoutMoraleLoss": 2,
   "reward": {
     "choices": 3,
@@ -21,9 +21,9 @@
     }
   },
   "start": {
-    "budget": 12,
+    "budget": 10,
     "secrecy": 10,
-    "morale": 8
+    "morale": 9
   },
   "max": {
     "secrecy": 10,
