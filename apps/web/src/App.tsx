@@ -56,11 +56,8 @@ export function App() {
     act({ type: 'playCard', uid });
   };
 
-  // Tap once to inspect, tap the same card again to play it.
-  const tapCard = (uid: number) => {
-    if (selected === uid) play(uid);
-    else setSelected(uid);
-  };
+  // Tap a card to enlarge it; tap it again to put it back. Only the Play button plays.
+  const tapCard = (uid: number) => setSelected((cur) => (cur === uid ? null : uid));
 
   const endTurn = () => {
     setSelected(null);
@@ -180,7 +177,7 @@ export function App() {
                     }
                   : undefined
               }
-              onClick={() => play(selInst.uid)}
+              onClick={() => setSelected(null)}
             />
             <button
               className="play-btn grain"
