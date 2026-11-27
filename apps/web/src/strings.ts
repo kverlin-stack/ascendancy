@@ -1,5 +1,5 @@
 import { NAMES } from '@ascendancy/content';
-import type { CardType, LossCause } from '@ascendancy/engine';
+import type { CantPlayReason, CardType, LossCause } from '@ascendancy/engine';
 
 /**
  * All player-facing UI copy. World names come from NAMES (packages/content/src/names.ts);
@@ -23,6 +23,36 @@ export const S = {
   rewardTitle: (q: number) => `Q${q} report`,
   rewardHint: 'Recruit one card into your deck, or skip.',
   skip: 'Skip',
+  scientist: 'Scientist',
+  turnLabel: (year: number, q: number, turn: number) => `Year ${year} · Q${q} · Turn ${turn}`,
+  menu: 'Menu',
+  close: 'Close',
+  frontTitle: 'The Front',
+  frontInfoTitle: 'The Front',
+  frontInfo: `Territories still standing between ${NAMES.enemy} and the capital. The ${NAMES.enemyShort} advances every quarter (every 3 turns), and the Advance grows each year. Some orders push it further. Fortify blocks Front loss for one turn; War Effort cards can push it back. At 0 the capital falls and you lose.`,
+  fortifyChip: (n: number) => `${n}`,
+  advanceChip: (adv: number, turns: number) => `−${adv} in ${turns} turn${turns === 1 ? '' : 's'}`,
+  enemyTitle: `${NAMES.enemyShort} orders · at end of turn`,
+  ordersLeft: (n: number) => `${n} left`,
+  ordersSheetTitle: `${NAMES.enemyShort} orders still to come`,
+  ordersSheetHint: 'The deck reshuffles when it runs out. New orders join as the year goes on.',
+  play: 'Play',
+  effortLabel: 'Effort',
+  piles: (deck: number, discard: number, lost: number) =>
+    `Deck ${deck} · Discard ${discard}${lost ? ` · Lost ${lost}` : ''}`,
+  recruit: (name: string) => `Recruit ${name}`,
+  pickOne: 'Tap a card to choose it.',
+  howToPlay: 'How to play',
+  rules: [
+    `Finish ${NAMES.program} (fill the Progress bar) before the ${NAMES.enemyShort} reaches the capital.`,
+    'Each turn: spend Effort to play cards, then End Turn. The order in the telegram hits when you end your turn.',
+    'If the Front, Secrecy, Budget or Morale hits 0, you lose.',
+    'Morale 8+ draws an extra card each turn. Morale 3 or less costs 1 Effort.',
+    'Scientists burn out: each play adds 1 Burnout, and at the limit they leave for good. Leave one unplayed in your hand and they rest 1.',
+    'After each quarter, recruit a new card.',
+  ],
+  oneUse: 'ONE USE',
+  compromised: 'COMPROMISED',
   burnoutLabel: (used: number, limit: number) => `Burnout ${used}/${limit}`,
   burnoutFresh: 'Each play adds 1. At the limit they leave for good.',
   burnoutResting: 'Skip playing them this turn and they rest (−1).',
@@ -35,6 +65,17 @@ export const S = {
   lostTitle: 'The war is lost',
   lostText: (cause: LossCause | null, turn: number, progress: number, goal: number) =>
     `${cause ? LOSS_TEXT[cause] : ''} Turn ${turn}, Progress ${progress}/${goal}.`,
+};
+
+/** Why a card can't be played, in the player's words. */
+export const BLOCKED: Record<CantPlayReason, string> = {
+  notPlaying: 'Not now',
+  notInHand: 'Not in hand',
+  effort: 'Not enough Effort',
+  unplayable: "Can't be played",
+  budget: 'Would drop Budget to 0',
+  morale: 'Would drop Morale to 0',
+  secrecy: 'Would drop Secrecy to 0',
 };
 
 export const TYPE_LABEL: Record<CardType, string> = {

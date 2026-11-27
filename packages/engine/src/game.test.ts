@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyAction, burnoutLimitOf, canPlay, cloneState, getCard, newGame } from './game';
+import {
+  applyAction,
+  burnoutLimitOf,
+  canPlay,
+  cloneState,
+  getCard,
+  newGame,
+  whyCantPlay,
+} from './game';
 import { testContent } from './test-fixtures';
 import type { GameContent, GameState } from './types';
 
@@ -69,6 +77,17 @@ describe('playCard', () => {
   it('rejects cards not in hand', () => {
     const s0 = withHand(newGame(content, 1), ['lab']);
     expect(applyAction(s0, { type: 'playCard', uid: 9999 }, content)).toBe(s0);
+  });
+
+  it('whyCantPlay names the reason', () => {
+    const s0 = withHand(newGame(content, 1), ['big', 'draw', 'lab']);
+    s0.resources.budget = 2;
+    s0.resources.morale = 1;
+    expect(whyCantPlay(s0, 1000, content)).toBe('budget');
+    expect(whyCantPlay(s0, 1001, content)).toBe('morale');
+    expect(whyCantPlay(s0, 1002, content)).toBeNull();
+    expect(whyCantPlay({ ...s0, effort: 0 }, 1002, content)).toBe('effort');
+    expect(whyCantPlay(s0, 9999, content)).toBe('notInHand');
   });
 
   it('blocks cards that would spend Budget or Morale to 0', () => {

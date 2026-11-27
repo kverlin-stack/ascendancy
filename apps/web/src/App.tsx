@@ -3,21 +3,29 @@ import {
   advanceFor,
   applyAction,
   burnoutLimitOf,
-  canPlay,
   getCard,
   getDirector,
   getThreat,
   newGame,
   quarterOf,
   turnsUntilAdvance,
+  whyCantPlay,
   yearOf,
+  type Action,
+  type CardDef,
   type GameState,
 } from '@ascendancy/engine';
 import { content } from '@ascendancy/content';
 import { loadRun, saveRun } from './save';
-import { S, STAT_INFO, STAT_LABEL, TYPE_LABEL, type StatKey } from './strings';
+import { BLOCKED, S, STAT_INFO, STAT_LABEL, type StatKey } from './strings';
+import { Card } from './components/Card';
+import { Hand } from './components/Hand';
+import { FrontTrack, Gauge, Sheet, StatTag, Telegram } from './components/Board';
 
 const { rules } = content;
+
+type SheetKind =
+  { kind: 'stat'; stat: StatKey } | { kind: 'front' } | { kind: 'orders' } | { kind: 'menu' };
 
 function randomSeed(): number {
   // UI-side only: the engine itself never uses Math.random.
@@ -26,206 +34,257 @@ function randomSeed(): number {
 
 export function App() {
   const [state, setState] = useState<GameState>(() => loadRun() ?? newGame(content, randomSeed()));
-  const [info, setInfo] = useState<StatKey | null>(null);
-  const [showEnemyDeck, setShowEnemyDeck] = useState(false);
-  const [showDirector, setShowDirector] = useState(false);
-  const toggleInfo = (key: StatKey) => setInfo((cur) => (cur === key ? null : key));
+  const [selected, setSelected] = useState<number | null>(null);
+  const [sheet, setSheet] = useState<SheetKind | null>(null);
+  const [pick, setPick] = useState<string | null>(null);
+  const [flying, setFlying] = useState<{ key: number; card: CardDef } | null>(null);
 
   useEffect(() => saveRun(state), [state]);
 
-  const act = (action: Parameters<typeof applyAction>[1]) =>
-    setState((s) => applyAction(s, action, content));
-  const newRun = () => setState(newGame(content, randomSeed()));
+  const act = (action: Action) => setState((s) => applyAction(s, action, content));
+  const newRun = () => {
+    setSelected(null);
+    setSheet(null);
+    setState(newGame(content, randomSeed()));
+  };
+
+  const play = (uid: number) => {
+    const inst = state.hand.find((c) => c.uid === uid);
+    if (!inst || whyCantPlay(state, uid, content)) return;
+    setFlying({ key: Date.now(), card: getCard(content, inst.cardId) });
+    setSelected(null);
+    act({ type: 'playCard', uid });
+  };
+
+  // Tap once to inspect, tap the same card again to play it.
+  const tapCard = (uid: number) => {
+    if (selected === uid) play(uid);
+    else setSelected(uid);
+  };
+
+  const endTurn = () => {
+    setSelected(null);
+    act({ type: 'endTurn' });
+  };
 
   const r = state.resources;
   const director = getDirector(content, state.directorId);
   const threat = getThreat(content, state.threatId);
-  const year = yearOf(state.turn, rules);
   const untilAdvance = turnsUntilAdvance(state, rules);
   const nextAdvance = advanceFor(yearOf(state.turn + untilAdvance - 1, rules), rules);
+  const selInst = state.hand.find((c) => c.uid === selected) ?? null;
+  const selCard = selInst ? getCard(content, selInst.cardId) : null;
+  const selReason = selInst ? whyCantPlay(state, selInst.uid, content) : null;
+  const moraleNote =
+    r.morale >= rules.morale.high
+      ? '+1 draw'
+      : r.morale <= rules.morale.low
+        ? '−1 Effort'
+        : undefined;
 
   return (
     <main className="app">
-      <header className="top">
-        <div>
-          <strong>Year {year}</strong> · Q{quarterOf(state.turn, rules)} · Turn {state.turn}
-        </div>
-        <button className="link" onClick={newRun}>
-          {S.newRun}
+      <header className="topbar">
+        <span className="turn">
+          {S.turnLabel(yearOf(state.turn, rules), quarterOf(state.turn, rules), state.turn)}
+        </span>
+        <button className="menu-btn" onClick={() => setSheet({ kind: 'menu' })} aria-label={S.menu}>
+          ☰
         </button>
       </header>
 
-      <button className="director" onClick={() => setShowDirector((v) => !v)}>
-        {director.name} · <em>{director.ruleName}</em> {showDirector ? '▴' : '▾'}
-      </button>
-      {showDirector && <p className="stat-info">{director.text}</p>}
-
-      <section className="progress" aria-label="Progress">
-        <div className="row">
-          <span>{S.progressLabel}</span>
-          <span>
-            {r.progress} / {rules.progressGoal}
-          </span>
-        </div>
-        <div className="bar">
-          <div style={{ width: `${(100 * r.progress) / rules.progressGoal}%` }} />
-        </div>
-      </section>
+      <Gauge value={r.progress} goal={rules.progressGoal} />
 
       <section className="stats">
-        <Stat
+        <StatTag
+          stat="secrecy"
           label={STAT_LABEL.secrecy}
           value={r.secrecy}
           max={rules.max.secrecy}
-          active={info === 'secrecy'}
-          onTap={() => toggleInfo('secrecy')}
+          onTap={() => setSheet({ kind: 'stat', stat: 'secrecy' })}
         />
-        <Stat
+        <StatTag
+          stat="budget"
           label={STAT_LABEL.budget}
           value={r.budget}
-          active={info === 'budget'}
-          onTap={() => toggleInfo('budget')}
+          onTap={() => setSheet({ kind: 'stat', stat: 'budget' })}
         />
-        <Stat
+        <StatTag
+          stat="morale"
           label={STAT_LABEL.morale}
           value={r.morale}
           max={rules.max.morale}
-          active={info === 'morale'}
-          onTap={() => toggleInfo('morale')}
+          note={moraleNote}
+          onTap={() => setSheet({ kind: 'stat', stat: 'morale' })}
         />
       </section>
-      <p className="stat-info">{info ? STAT_INFO[info] : S.statsHint}</p>
 
-      <section className="front" aria-label="The Front">
-        <div className="row">
-          <span>
-            Front: <strong>{S.frontHeld(r.front, rules.frontTerritories)}</strong>
-          </span>
-          <span className="muted">
-            −{nextAdvance} in {untilAdvance} turn{untilAdvance === 1 ? '' : 's'}
-          </span>
-        </div>
-        {state.fortify > 0 && <div className="fortify">{S.fortified(state.fortify)}</div>}
-        <div className="territories">
-          {Array.from({ length: rules.frontTerritories }, (_, i) => {
-            const held = i >= rules.frontTerritories - r.front;
-            return <div key={i} className={held ? 'cell held' : 'cell lost'} />;
-          })}
-          <div className="capital" title={S.capital}>
-            ★
-          </div>
-        </div>
-      </section>
+      <FrontTrack
+        front={r.front}
+        total={rules.frontTerritories}
+        nextAdvance={nextAdvance}
+        turnsUntil={untilAdvance}
+        fortify={state.fortify}
+        onTap={() => setSheet({ kind: 'front' })}
+      />
 
-      <section className="threat">
-        <span className="muted">{S.enemyNext}</span>
-        <div>
-          <strong>{threat.name}</strong>: {threat.text}
-        </div>
-        <button className="enemy-deck" onClick={() => setShowEnemyDeck((v) => !v)}>
-          {S.enemyDeck(state.enemyDeck.length)} {showEnemyDeck ? '▴' : '▾'}
-        </button>
-        {showEnemyDeck && (
-          <ul className="enemy-list">
-            {countBy(state.enemyDeck).map(([id, n]) => (
-              <li key={id}>
-                {n}× {getThreat(content, id).name}:{' '}
-                <span className="muted">{getThreat(content, id).text}</span>
-              </li>
-            ))}
-            {state.enemyDeck.length === 0 && <li className="muted">{S.enemyDeckEmpty}</li>}
-          </ul>
-        )}
-      </section>
+      <Telegram
+        title={S.enemyTitle}
+        name={threat.name}
+        text={threat.text}
+        ordersLeft={state.enemyDeck.length}
+        onTap={() => setSheet({ kind: 'orders' })}
+      />
 
-      <section className="effort" aria-label="Effort">
-        Effort{' '}
-        {Array.from({ length: state.maxEffort }, (_, i) => (
-          <span key={i} className={i < state.effort ? 'pip on' : 'pip'} />
-        ))}
-        <span className="muted">
-          {' '}
-          · deck {state.drawPile.length} · discard {state.discard.length}
-          {state.lost.length > 0 && ` · lost ${state.lost.length}`}
-        </span>
-      </section>
-
-      <section className="hand">
-        {state.hand.map((inst) => {
-          const card = getCard(content, inst.cardId);
-          const playable = canPlay(state, inst.uid, content);
-          return (
-            <button
-              key={inst.uid}
-              className={`card ${card.type}`}
-              disabled={!playable}
-              onClick={() => act({ type: 'playCard', uid: inst.uid })}
-            >
-              <span className="cost">{card.cost}</span>
-              <span className="name">{card.name}</span>
-              <span className="type">{card.scientist ? 'Scientist' : TYPE_LABEL[card.type]}</span>
-              <span className="text">{card.text}</span>
-              {card.flavorText && <span className="flavor">{card.flavorText}</span>}
-              {card.scientist && (
-                <Burnout
-                  used={state.burnout[inst.uid] ?? 0}
-                  limit={burnoutLimitOf(state, content, card)}
-                />
-              )}
-            </button>
-          );
-        })}
-        {state.hand.length === 0 && <p className="muted">{S.emptyHand}</p>}
-      </section>
-
-      <ol className="log">
-        {state.log.slice(-4).map((line, i) => (
-          <li key={state.log.length - 4 + i} className={line.includes('burned out') ? 'warn' : ''}>
+      <section className="ticker" aria-live="polite">
+        {state.log.slice(-3).map((line, i, arr) => (
+          <div
+            key={state.log.length - arr.length + i}
+            className={line.includes('burned out') ? 'warn' : ''}
+          >
             {line}
-          </li>
+          </div>
         ))}
-      </ol>
+      </section>
 
-      <footer className="bottom">
-        <button className="end-turn" onClick={() => act({ type: 'endTurn' })}>
+      <Hand state={state} content={content} selected={selected} onSelect={tapCard} />
+
+      <footer className="bottombar">
+        <div className="effort">
+          <span className="effort-label">{S.effortLabel}</span>
+          <span className="effort-pips">
+            {Array.from({ length: state.maxEffort }, (_, i) => (
+              <span key={i} className={i < state.effort ? 'pip on' : 'pip'} />
+            ))}
+          </span>
+          <span className="piles">
+            {S.piles(state.drawPile.length, state.discard.length, state.lost.length)}
+          </span>
+        </div>
+        <button className="end-turn grain" onClick={endTurn}>
           {S.endTurn}
         </button>
       </footer>
 
+      {selCard && selInst && (
+        <div className="inspect" onClick={() => setSelected(null)}>
+          <div className="inspect-inner" onClick={(e) => e.stopPropagation()}>
+            <Card
+              card={selCard}
+              size="full"
+              burnout={
+                selCard.scientist
+                  ? {
+                      used: state.burnout[selInst.uid] ?? 0,
+                      limit: burnoutLimitOf(state, content, selCard),
+                    }
+                  : undefined
+              }
+              onClick={() => play(selInst.uid)}
+            />
+            <button
+              className="play-btn grain"
+              disabled={!!selReason}
+              onClick={() => play(selInst.uid)}
+            >
+              {selReason ? BLOCKED[selReason] : `${S.play} · ${selCard.cost} ${S.effortLabel}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {flying && (
+        <div className="flying" key={flying.key} onAnimationEnd={() => setFlying(null)}>
+          <Card card={flying.card} size="full" />
+        </div>
+      )}
+
+      {sheet?.kind === 'stat' && (
+        <Sheet title={STAT_LABEL[sheet.stat]} onClose={() => setSheet(null)}>
+          <p>{STAT_INFO[sheet.stat]}</p>
+        </Sheet>
+      )}
+      {sheet?.kind === 'front' && (
+        <Sheet title={S.frontInfoTitle} onClose={() => setSheet(null)}>
+          <p>{S.frontInfo}</p>
+        </Sheet>
+      )}
+      {sheet?.kind === 'orders' && (
+        <Sheet title={S.ordersSheetTitle} onClose={() => setSheet(null)}>
+          <ul className="orders">
+            {countBy(state.enemyDeck).map(([id, n]) => (
+              <li key={id}>
+                <strong>
+                  {n}× {getThreat(content, id).name}
+                </strong>{' '}
+                <span className="dim">{getThreat(content, id).text}</span>
+              </li>
+            ))}
+            {state.enemyDeck.length === 0 && <li className="dim">{S.enemyDeckEmpty}</li>}
+          </ul>
+          <p className="dim small">{S.ordersSheetHint}</p>
+        </Sheet>
+      )}
+      {sheet?.kind === 'menu' && (
+        <Sheet title={director.name} onClose={() => setSheet(null)}>
+          <p>
+            <strong>{director.ruleName}.</strong> {director.text}
+          </p>
+          <h3>{S.howToPlay}</h3>
+          <ul className="rules-list">
+            {S.rules.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <button className="end-turn grain" onClick={newRun}>
+            {S.newRun}
+          </button>
+        </Sheet>
+      )}
+
       {state.phase === 'reward' && (
-        <div className="overlay" role="dialog" aria-modal="true">
-          <div className="panel reward">
+        <div className="overlay">
+          <div className="reward">
             <h2>{S.rewardTitle(quarterOf(state.turn, rules))}</h2>
-            <p className="muted">{S.rewardHint}</p>
-            <div className="hand">
+            <p className="dim">{S.rewardHint}</p>
+            <div className="picks">
               {state.rewardOptions.map((id) => {
                 const card = getCard(content, id);
                 return (
-                  <button
+                  <Card
                     key={id}
-                    className={`card ${card.type}`}
-                    onClick={() => act({ type: 'chooseReward', cardId: id })}
-                  >
-                    <span className="cost">{card.cost}</span>
-                    <span className="name">{card.name}</span>
-                    <span className="type">
-                      {card.scientist ? 'Scientist' : TYPE_LABEL[card.type]} · {card.rarity}
-                    </span>
-                    <span className="text">{card.text}</span>
-                    {card.flavorText && <span className="flavor">{card.flavorText}</span>}
-                    {card.scientist && (
-                      <span className="role muted">
-                        {card.scientist.role}{' '}
-                        {S.burnoutReward(burnoutLimitOf(state, content, card))}
-                      </span>
-                    )}
-                  </button>
+                    card={card}
+                    size="pick"
+                    selected={pick === id}
+                    burnout={
+                      card.scientist
+                        ? { used: 0, limit: burnoutLimitOf(state, content, card) }
+                        : undefined
+                    }
+                    onClick={() => setPick(id)}
+                  />
                 );
               })}
             </div>
+            <p className="pick-detail">
+              {pick ? (getCard(content, pick).flavorText ?? '') : S.pickOne}
+            </p>
             <button
-              className="link skip"
-              onClick={() => act({ type: 'chooseReward', cardId: null })}
+              className="end-turn grain"
+              disabled={!pick}
+              onClick={() => {
+                act({ type: 'chooseReward', cardId: pick });
+                setPick(null);
+              }}
+            >
+              {pick ? S.recruit(getCard(content, pick).name) : S.pickOne}
+            </button>
+            <button
+              className="skip"
+              onClick={() => {
+                act({ type: 'chooseReward', cardId: null });
+                setPick(null);
+              }}
             >
               {S.skip}
             </button>
@@ -234,15 +293,15 @@ export function App() {
       )}
 
       {(state.phase === 'won' || state.phase === 'lost') && (
-        <div className="overlay" role="dialog" aria-modal="true">
-          <div className="panel">
+        <div className="overlay">
+          <div className={`gameover grain ${state.phase}`}>
             <h2>{state.phase === 'won' ? S.wonTitle : S.lostTitle}</h2>
             <p>
               {state.phase === 'won'
                 ? S.wonText(state.turn, r.front)
                 : S.lostText(state.lossCause, state.turn, r.progress, rules.progressGoal)}
             </p>
-            <button className="end-turn" onClick={newRun}>
+            <button className="end-turn grain" onClick={newRun}>
               {S.newRun}
             </button>
           </div>
@@ -256,49 +315,4 @@ function countBy(ids: string[]): [string, number][] {
   const m = new Map<string, number>();
   for (const id of ids) m.set(id, (m.get(id) ?? 0) + 1);
   return [...m.entries()].sort((a, b) => b[1] - a[1]);
-}
-
-/** Burnout meter: filled pips are used up; the last pip is the burnout play. */
-function Burnout({ used, limit }: { used: number; limit: number }) {
-  const last = used === limit - 1;
-  return (
-    <span className="burnout">
-      <span className="burnout-row">
-        <span className={last ? 'warn' : 'muted'}>{S.burnoutLabel(used, limit)}</span>
-        {Array.from({ length: limit }, (_, i) => (
-          <span key={i} className={i < used ? 'bpip used' : 'bpip'} />
-        ))}
-      </span>
-      <span className={last ? 'warn' : 'muted'}>
-        {last ? S.burnoutLast : used > 0 ? S.burnoutResting : S.burnoutFresh}
-      </span>
-    </span>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  max,
-  active,
-  onTap,
-}: {
-  label: string;
-  value: number;
-  max?: number;
-  active: boolean;
-  onTap: () => void;
-}) {
-  const classes = ['stat', value <= 3 ? 'low' : '', active ? 'active' : '']
-    .filter(Boolean)
-    .join(' ');
-  return (
-    <button className={classes} onClick={onTap} aria-expanded={active}>
-      <span className="muted">{label} ⓘ</span>
-      <strong>
-        {value}
-        {max !== undefined && <span className="muted">/{max}</span>}
-      </strong>
-    </button>
-  );
 }

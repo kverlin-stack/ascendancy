@@ -125,17 +125,25 @@ export function getThreat(content: GameContent, threatId: string): ThreatDef {
   return threat;
 }
 
+export type CantPlayReason =
+  'notPlaying' | 'notInHand' | 'effort' | 'unplayable' | 'budget' | 'morale' | 'secrecy';
+
 /**
- * A card is playable if it's in hand, you have the Effort, and it wouldn't
- * spend Budget or Morale down to 0 (cards can't make you lose by themselves).
+ * Why a card can't be played right now, or null if it can. A card needs to be in
+ * hand, affordable in Effort, and must not spend Budget, Morale or Secrecy down
+ * to 0 (cards can't make you lose by themselves).
  */
-export function canPlay(state: GameState, uid: number, content: GameContent): boolean {
-  if (state.phase !== 'playing') return false;
+export function whyCantPlay(
+  state: GameState,
+  uid: number,
+  content: GameContent,
+): CantPlayReason | null {
+  if (state.phase !== 'playing') return 'notPlaying';
   const inst = state.hand.find((c) => c.uid === uid);
-  if (!inst) return false;
+  if (!inst) return 'notInHand';
   const card = getCard(content, inst.cardId);
-  if (card.cost > state.effort) return false;
-  if (card.type === 'status' && card.effects.length === 0 && !card.exhaust) return false;
+  if (card.cost > state.effort) return 'effort';
+  if (card.type === 'status' && card.effects.length === 0 && !card.exhaust) return 'unplayable';
   let budget = 0;
   let morale = 0;
   let secrecy = 0;
@@ -149,10 +157,14 @@ export function canPlay(state: GameState, uid: number, content: GameContent): bo
     morale -= content.rules.burnoutMoraleLoss;
   }
   const r = state.resources;
-  if (budget < 0 && r.budget + budget <= 0) return false;
-  if (morale < 0 && r.morale + morale <= 0) return false;
-  if (secrecy < 0 && r.secrecy + secrecy <= 0) return false;
-  return true;
+  if (budget < 0 && r.budget + budget <= 0) return 'budget';
+  if (morale < 0 && r.morale + morale <= 0) return 'morale';
+  if (secrecy < 0 && r.secrecy + secrecy <= 0) return 'secrecy';
+  return null;
+}
+
+export function canPlay(state: GameState, uid: number, content: GameContent): boolean {
+  return whyCantPlay(state, uid, content) === null;
 }
 
 function playCard(state: GameState, uid: number, content: GameContent): GameState {

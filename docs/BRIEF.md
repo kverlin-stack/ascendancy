@@ -74,9 +74,10 @@ Both acts share one turn structure: draw 5 cards, spend **Effort** (3 per turn, 
 
 ## Monetization and business model
 
-**Free Act I, paid Act II.** The download is free and includes all of Act I: the full war campaign, its directors and its Clearance Levels. A one-time unlock (around $5–8) opens **Act II: The Ascent**. Act I's ending is the sales pitch: the unification epilogue reveals the new world, then offers the unlock.
+**Free, ad-supported Act I; one paid unlock.** The download is free and includes all of Act I: the full war campaign, its directors and its Clearance Levels, supported by ads. A one-time purchase (around $5–8) removes ads and opens **Act II: The Ascent** (and future acts or expansions are candidates for the same model). Act I has to be fun and engaging enough that ads are tolerated, and Act I's ending is the sales pitch: the unification epilogue reveals the new world, then offers the unlock.
 
-- **Why it works:** players reach the paywall after finishing a satisfying game, so the unlock feels like buying the sequel, not paying a ransom. Because the free part is complete, reviews stay positive. No ads and no energy timers.
+- **Why it works:** players reach the paywall after finishing a satisfying game, so the unlock feels like buying the sequel and getting rid of ads, not paying a ransom. Because the free part is complete, reviews stay positive. No energy timers.
+- **Ad guardrails:** ads only at natural breaks (between runs, or at most between quarters), never mid-turn and never on top of a decision. No ads in the first run. Optional rewarded ads (watch for a reroll of the card picks) are fine; forced ads that block a paused run are not. Ads must never feel like a punishment for losing.
 - **The catch:** with all of Act I free, Act II has to be clearly bigger and different, or people won't convert. Pillar 2 exists for this reason.
 - **Expansions later:** new destinations and colony scenarios for Act II, or a future Act III that goes beyond the first colony, sold as paid packs.
 - **Subscription stores:** pitch Apple Arcade and Google Play Pass once there's a polished vertical slice.

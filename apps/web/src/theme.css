@@ -1,0 +1,110 @@
+/*
+ * Act I design tokens: wartime propaganda poster (docs/WORLD.md).
+ * Bold flat shapes, 2-3 inks per surface, screen-print grain.
+ */
+@import '@fontsource/oswald/500.css';
+@import '@fontsource/oswald/700.css';
+@import '@fontsource/special-elite/400.css';
+@import '@fontsource/ibm-plex-sans-condensed/400.css';
+@import '@fontsource/ibm-plex-sans-condensed/600.css';
+
+:root {
+  --paper: #efe3c8;
+  --paper-2: #e3d4b1;
+  --paper-3: #d4c29b;
+  --ink: #1d1a16;
+  --ink-2: #3b352d;
+  --ink-soft: #6b6152;
+  --red: #c4342a;
+  --red-dark: #8f241d;
+  --held: #6b7d3a;
+  --lost: #5a2a22;
+  --bg: #231f1a;
+  --bg-2: #2e2922;
+
+  /* One ink per card type, plus a light tint for art backgrounds. */
+  --research: #2d5c74;
+  --research-tint: #a9c3cc;
+  --warEffort: #5e6b2f;
+  --warEffort-tint: #c3c592;
+  --security: #463f63;
+  --security-tint: #b7b0cc;
+  --people: #b07a22;
+  --people-tint: #e8c98a;
+  --status: #2a2723;
+  --status-tint: #6b6152;
+
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'IBM Plex Sans Condensed', 'Arial Narrow', sans-serif;
+  --font-type: 'Special Elite', 'Courier New', monospace;
+
+  /* Layout: the whole game fits one screen, no scrolling. */
+  --gutter: 12px;
+  --card-w: 122px;
+  --hand-h: calc(var(--card-w) * 1.46 + 34px);
+  --bar-h: 58px;
+
+  color-scheme: dark;
+  font-family: var(--font-body);
+}
+
+/* Screen-print grain, as a tiling SVG noise texture. */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  z-index: 2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--paper);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+@media (max-height: 700px) {
+  :root {
+    --card-w: 112px;
+    --bar-h: 54px;
+  }
+}
+
+@media (min-height: 800px) {
+  :root {
+    --card-w: 132px;
+  }
+}
