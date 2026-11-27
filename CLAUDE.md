@@ -47,11 +47,11 @@ A single-player roguelike deckbuilder for phones, told in two acts. The full des
 
 ## Roadmap
 
-0. **Foundation:** monorepo, engine skeleton, seeded RNG, content schema, tests, CI, preview deploy, sim bot. _Gate: a bot can play a full run end to end._
-1. **Act I ugly prototype:** one year, ~30 cards, 1 director, the Front, enemy actions, Burnout, placeholder UI. _Gate: the Front and Burnout feel distinct._
-2. **Act I vertical slice:** map, events, facilities, first Great Offensive, saves, poster art style on a few cards. _Gate: 5+ outside testers want another run._
-3. **Act I complete + Act II prototype** of the launch-window clock. _Gate: Act II feels worth paying for._
-4. **Act II build:** stages, crew, destinations, Legacy, colony ending. _Gate: win rates in target ranges._
+0. **Foundation:** monorepo, engine skeleton, seeded RNG, content schema, tests, CI, preview deploy, sim bot. *Gate: a bot can play a full run end to end.*
+1. **Act I ugly prototype:** one year, ~30 cards, 1 director, the Front, enemy actions, Burnout, placeholder UI. *Gate: the Front and Burnout feel distinct.*
+2. **Act I vertical slice:** map, events, facilities, first Great Offensive, saves, poster art style on a few cards. *Gate: 5+ outside testers want another run.*
+3. **Act I complete + Act II prototype** of the launch-window clock. *Gate: Act II feels worth paying for.*
+4. **Act II build:** stages, crew, destinations, Legacy, colony ending. *Gate: win rates in target ranges.*
 5. **Launch:** Capacitor builds, free Act I + Act II unlock, store listings.
 
 Current phase: **0**.
