@@ -20,12 +20,14 @@ import {
   type GameState,
 } from '@ascendancy/engine';
 import { content } from '@ascendancy/content';
-import { loadRun, saveRun } from './save';
+import { hasSeen, loadRun, markSeen, saveRun } from './save';
 import { BLOCKED, S, STAT_INFO, STAT_LABEL, type StatKey } from './strings';
 import { Card } from './components/Card';
 import { Hand } from './components/Hand';
 import { FrontTrack, Gauge, Sheet, StatTag, Telegram } from './components/Board';
 import { FacilityCard, FacilityTile } from './components/FacilityCard';
+import { Intro } from './components/Intro';
+import { Coach } from './components/Coach';
 
 const { rules } = content;
 
@@ -46,6 +48,8 @@ export function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [sheet, setSheet] = useState<SheetKind | null>(null);
   const [pick, setPick] = useState<string | null>(null);
+  const [showIntro, setShowIntro] = useState(() => !hasSeen('intro'));
+  const [showCoach, setShowCoach] = useState(() => !hasSeen('coach'));
   const [flying, setFlying] = useState<{ key: number; card: CardDef } | null>(null);
 
   useEffect(() => saveRun(state), [state]);
@@ -281,6 +285,16 @@ export function App() {
           <button className="end-turn grain" onClick={newRun}>
             {S.newRun}
           </button>
+          <button
+            className="skip sheet-link"
+            onClick={() => {
+              setSheet(null);
+              setShowCoach(true);
+              setShowIntro(true);
+            }}
+          >
+            {S.replayIntro}
+          </button>
         </Sheet>
       )}
 
@@ -364,6 +378,24 @@ export function App() {
             )}
           </div>
         </div>
+      )}
+
+      {!showIntro && showCoach && state.phase === 'playing' && !sheet && selected === null && (
+        <Coach
+          onDone={() => {
+            markSeen('coach');
+            setShowCoach(false);
+          }}
+        />
+      )}
+
+      {showIntro && (
+        <Intro
+          onDone={() => {
+            markSeen('intro');
+            setShowIntro(false);
+          }}
+        />
       )}
 
       {(state.phase === 'won' || state.phase === 'lost') && (

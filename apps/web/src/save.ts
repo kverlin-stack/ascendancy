@@ -29,3 +29,23 @@ export function clearRun(): void {
     // Nothing to clear.
   }
 }
+
+type SeenFlag = 'intro' | 'coach';
+const seenKey = (flag: SeenFlag) => `ascendancy.seen.${flag}`;
+
+/** Whether the player has already seen the story intro or the guided first turn. */
+export function hasSeen(flag: SeenFlag): boolean {
+  try {
+    return localStorage.getItem(seenKey(flag)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markSeen(flag: SeenFlag): void {
+  try {
+    localStorage.setItem(seenKey(flag), '1');
+  } catch {
+    // Storage blocked: the intro will simply show again next time.
+  }
+}

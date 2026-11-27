@@ -643,3 +643,10 @@
     transition: none !important;
   }
 }
+
+.sheet-link {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  color: var(--ink-soft);
+}

@@ -23,6 +23,11 @@ export const S = {
   rewardTitle: (q: number) => `Q${q} report`,
   rewardHint: 'Recruit one card into your deck, or skip.',
   skip: 'Skip',
+  introNext: 'Next',
+  introSkip: 'Skip',
+  introStart: 'Take command',
+  coachDone: 'Begin',
+  replayIntro: 'Replay the intro',
   scientist: 'Scientist',
   facility: 'Facility',
   facilitiesTitle: 'Your Facilities',
@@ -123,3 +128,54 @@ const LOSS_TEXT: Record<LossCause, string> = {
   budget: 'The money ran out.',
   morale: 'Morale broke. The staff walked out.',
 };
+
+/** Story panels shown before the first run. Tone: Act I, clipped and determined (docs/WORLD.md). */
+export const INTRO: { kicker: string; title: string; body: string; motif: string; tint: string }[] =
+  [
+    {
+      kicker: 'Dispatch · Year One',
+      title: 'The war is being lost',
+      body: `${cap(NAMES.enemy)} advances on every front. ${cap(NAMES.alliance)}, a battered alliance of free nations, holds ten territories between the enemy and the capital. No more.`,
+      motif: 'arrows',
+      tint: 'warEffort',
+    },
+    {
+      kicker: 'Most secret',
+      title: 'One hope remains',
+      body: `${NAMES.program}: a hidden program to master a new science before the ${NAMES.enemyShort} arrives. Its laboratories are half built. Its scientists are tired already. You direct it.`,
+      motif: 'sunrise',
+      tint: 'research',
+    },
+    {
+      kicker: 'Your orders',
+      title: 'Finish it in time',
+      body: `Push the research. Hold the line. Keep the secret, the budget and your people intact. Complete ${NAMES.programShort} before the capital falls.`,
+      motif: 'clock',
+      tint: 'people',
+    },
+  ];
+
+/** Guided first turn: one note per part of the board. `target` is a CSS selector. */
+export const COACH: { target: string; text: string }[] = [
+  { target: '.gauge', text: `This is ${NAMES.program}. Fill the bar and you win the war.` },
+  {
+    target: '.stats',
+    text: 'Secrecy, Budget and Morale. If any of them hits 0, you lose. Tap one any time to see what moves it.',
+  },
+  {
+    target: '.front',
+    text: `The Front: territories still held. The ${NAMES.enemyShort} advances every 3 turns. At 0 the capital falls.`,
+  },
+  {
+    target: '.telegram',
+    text: `The ${NAMES.enemyShort}'s next order. It hits when you end your turn, so answer it first if you can.`,
+  },
+  {
+    target: '.hand',
+    text: 'Your hand. Tap a card to read it, then press Play. Scientists are your strongest cards, but each play wears them down.',
+  },
+  {
+    target: '.bottombar',
+    text: 'Cards cost Effort, and you get 3 a turn. When you are done, End Turn: unplayed cards are discarded and you draw a fresh hand.',
+  },
+];

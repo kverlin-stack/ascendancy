@@ -5,6 +5,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import './theme.css';
 import './components/card.css';
 import './layout.css';
+import './intro.css';
 import { S } from './strings';
 
 document.title = S.title;
