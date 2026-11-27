@@ -1,0 +1,85 @@
+import type { GameContent } from './types';
+
+/** Small, predictable content for engine tests. Real content lives in packages/content. */
+export function testContent(overrides: Partial<GameContent> = {}): GameContent {
+  return {
+    rules: {
+      handSize: 5,
+      effortPerTurn: 3,
+      progressGoal: 10,
+      frontTerritories: 10,
+      turnsPerQuarter: 3,
+      quartersPerYear: 4,
+      advanceByYear: [1, 2, 3],
+      start: { budget: 5, secrecy: 5, morale: 5 },
+      max: { secrecy: 10, morale: 10 },
+    },
+    cards: [
+      {
+        id: 'lab',
+        name: 'Lab',
+        type: 'research',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'addProgress', amount: 2 }],
+      },
+      {
+        id: 'big',
+        name: 'Big',
+        type: 'research',
+        cost: 2,
+        text: '',
+        effects: [
+          { type: 'addProgress', amount: 4 },
+          { type: 'gainBudget', amount: -2 },
+        ],
+      },
+      {
+        id: 'hold',
+        name: 'Hold',
+        type: 'warEffort',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'pushFront', amount: 2 }],
+      },
+      {
+        id: 'cover',
+        name: 'Cover',
+        type: 'security',
+        cost: 0,
+        text: '',
+        effects: [{ type: 'protectSecrecy', amount: 3 }],
+      },
+      {
+        id: 'rally',
+        name: 'Rally',
+        type: 'people',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'gainMorale', amount: 2 }],
+      },
+      {
+        id: 'draw',
+        name: 'Draw',
+        type: 'people',
+        cost: 0,
+        text: '',
+        effects: [
+          { type: 'drawCards', amount: 2 },
+          { type: 'gainMorale', amount: -1 },
+        ],
+      },
+      {
+        id: 'bonds',
+        name: 'Bonds',
+        type: 'people',
+        cost: 1,
+        text: '',
+        effects: [{ type: 'gainBudget', amount: 3 }],
+      },
+    ],
+    threats: [{ id: 'quiet', name: 'Quiet', text: '', weight: 1, effects: [] }],
+    starterDeck: ['lab', 'lab', 'lab', 'big', 'hold', 'hold', 'cover', 'rally', 'draw', 'bonds'],
+    ...overrides,
+  };
+}
